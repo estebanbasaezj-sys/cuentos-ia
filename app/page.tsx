@@ -1,101 +1,99 @@
-import Image from "next/image";
+import Link from "next/link";
+import Navbar from "@/components/layout/Navbar";
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <>
+      <Navbar />
+      <main>
+        {/* Hero */}
+        <section className="max-w-6xl mx-auto px-4 py-20 text-center">
+          <div className="text-6xl mb-6">📖✨</div>
+          <h1 className="text-4xl md:text-5xl font-bold text-purple-800 mb-4">
+            Cuentos mágicos para tus hijos
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            Crea cuentos infantiles personalizados con inteligencia artificial.
+            Texto único, ilustraciones hermosas y recuerdos para toda la vida.
+          </p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Link href="/register" className="btn-primary text-lg !py-3 !px-8">
+              Empezar gratis
+            </Link>
+            <a href="#como-funciona" className="btn-secondary text-lg !py-3 !px-8">
+              ¿Cómo funciona?
+            </a>
+          </div>
+          <p className="mt-4 text-sm text-gray-500">1 cuento gratuito al día. Sin tarjeta de crédito.</p>
+        </section>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+        {/* How it works */}
+        <section id="como-funciona" className="bg-white py-20">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center text-purple-800 mb-12">
+              ¿Cómo funciona?
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { icon: "✏️", title: "1. Personaliza", desc: "Ingresa el nombre de tu hijo/a, elige un tema, tono y detalles especiales como su mascota favorita." },
+                { icon: "🤖", title: "2. La IA crea", desc: "Nuestra inteligencia artificial escribe un cuento único con ilustraciones hermosas en menos de 2 minutos." },
+                { icon: "📚", title: "3. Disfruta", desc: "Lee el cuento, edítalo si quieres, descárgalo en PDF o compártelo con la familia." },
+              ].map((step) => (
+                <div key={step.title} className="card text-center">
+                  <div className="text-4xl mb-4">{step.icon}</div>
+                  <h3 className="text-xl font-bold text-purple-700 mb-2">{step.title}</h3>
+                  <p className="text-gray-600">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="py-20">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center text-purple-800 mb-12">
+              Todo lo que necesitas
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                { icon: "🎨", title: "Ilustraciones únicas", desc: "Cada cuento incluye 4-6 ilustraciones generadas con IA, estilo acuarela infantil." },
+                { icon: "📄", title: "Descarga en PDF", desc: "Descarga cuentos con portada y diseño profesional para imprimir o guardar." },
+                { icon: "🔗", title: "Comparte con la familia", desc: "Genera links privados con expiración para compartir con abuelos y tíos." },
+                { icon: "🛡️", title: "Seguro para niños", desc: "Filtros de contenido automáticos. Sin violencia, sin contenido inapropiado." },
+                { icon: "✍️", title: "Edita a tu gusto", desc: "Modifica el texto generado y regenera ilustraciones para páginas específicas." },
+                { icon: "📱", title: "Desde cualquier dispositivo", desc: "Funciona en celular, tablet y computador. Diseño responsive." },
+              ].map((f) => (
+                <div key={f.title} className="card flex gap-4 items-start">
+                  <span className="text-3xl">{f.icon}</span>
+                  <div>
+                    <h3 className="font-bold text-purple-700 mb-1">{f.title}</h3>
+                    <p className="text-gray-600 text-sm">{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="bg-purple-700 py-16 text-white text-center">
+          <div className="max-w-2xl mx-auto px-4">
+            <h2 className="text-3xl font-bold mb-4">Crea el primer cuento de tu hijo hoy</h2>
+            <p className="text-purple-200 mb-8">
+              Es gratis. Toma menos de 2 minutos. Y será un recuerdo inolvidable.
+            </p>
+            <Link href="/register" className="bg-white text-purple-700 font-bold py-3 px-8 rounded-xl hover:bg-purple-50 transition-colors text-lg inline-block">
+              Crear mi primer cuento
+            </Link>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-white border-t border-orange-100 py-8 text-center text-gray-500 text-sm">
+          <p>&copy; 2025 Cuentos IA. Hecho con amor para familias.</p>
+        </footer>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    </>
   );
 }
