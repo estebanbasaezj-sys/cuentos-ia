@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AGE_GROUPS, THEMES, TONES, LENGTHS } from "@/lib/constants";
+import { AGE_GROUPS, THEMES, TONES, LENGTHS, ART_STYLES, COLOR_PALETTES } from "@/lib/constants";
 
 export default function CrearCuentoPage() {
   const router = useRouter();
@@ -18,6 +18,8 @@ export default function CrearCuentoPage() {
   const [length, setLength] = useState("corto");
   const [mascota, setMascota] = useState("");
   const [colorFavorito, setColorFavorito] = useState("");
+  const [artStyle, setArtStyle] = useState("watercolor");
+  const [colorPalette, setColorPalette] = useState("warm");
 
   useEffect(() => {
     fetch("/api/usage")
@@ -52,6 +54,8 @@ export default function CrearCuentoPage() {
           traits: {
             ...(mascota && { mascota }),
             ...(colorFavorito && { colorFavorito }),
+            artStyle: ART_STYLES.find(s => s.value === artStyle)?.prompt,
+            colorPalette: COLOR_PALETTES.find(p => p.value === colorPalette)?.prompt,
           },
         }),
       });
@@ -204,6 +208,59 @@ export default function CrearCuentoPage() {
                   className="sr-only"
                 />
                 {l.label}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Image style options */}
+        <div>
+          <label className="label-field">Estilo de ilustración</label>
+          <div className="flex gap-2 flex-wrap">
+            {ART_STYLES.map((s) => (
+              <label
+                key={s.value}
+                className={`px-3 py-2 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium ${
+                  artStyle === s.value
+                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-purple-200"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="artStyle"
+                  value={s.value}
+                  checked={artStyle === s.value}
+                  onChange={(e) => setArtStyle(e.target.value)}
+                  className="sr-only"
+                />
+                {s.label}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="label-field">Paleta de colores</label>
+          <div className="flex gap-2 flex-wrap">
+            {COLOR_PALETTES.map((p) => (
+              <label
+                key={p.value}
+                className={`px-3 py-2 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium ${
+                  colorPalette === p.value
+                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-purple-200"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="colorPalette"
+                  value={p.value}
+                  checked={colorPalette === p.value}
+                  onChange={(e) => setColorPalette(e.target.value)}
+                  className="sr-only"
+                />
+                {p.label}
               </label>
             ))}
           </div>

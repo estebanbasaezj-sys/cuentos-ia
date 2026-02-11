@@ -36,3 +36,19 @@ export const SHARE_EXPIRATION_OPTIONS = [
   { value: 14, label: '14 días' },
   { value: 30, label: '30 días' },
 ] as const;
+
+export const ART_STYLES = [
+  { value: 'watercolor', label: 'Acuarela', prompt: 'watercolor illustration, soft brushstrokes, gentle color washes' },
+  { value: 'cartoon', label: 'Caricatura', prompt: 'cartoon style, bold outlines, playful and expressive characters' },
+  { value: 'digital', label: 'Digital moderno', prompt: 'modern digital art, clean lines, smooth gradients, vibrant' },
+  { value: 'storybook', label: 'Libro clásico', prompt: 'classic storybook illustration, detailed, timeless fairy tale style' },
+  { value: 'pastel', label: 'Pastel suave', prompt: 'soft pastel colors, dreamy atmosphere, gentle and calming' },
+] as const;
+
+export const COLOR_PALETTES = [
+  { value: 'warm', label: 'Cálidos', prompt: 'warm color palette with oranges, yellows, and reds' },
+  { value: 'cool', label: 'Fríos', prompt: 'cool color palette with blues, greens, and purples' },
+  { value: 'pastel', label: 'Pasteles', prompt: 'soft pastel colors, muted and gentle tones' },
+  { value: 'vibrant', label: 'Vibrantes', prompt: 'bright vibrant saturated colors, high contrast' },
+  { value: 'earth', label: 'Tierra', prompt: 'earthy natural tones, browns, greens, warm neutrals' },
+] as const;

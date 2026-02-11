@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@14:*)",
+      "Bash(powershell -Command \"Copy-Item -Path ''temp-init\\\\*'' -Destination ''.'' -Recurse -Force; Copy-Item -Path ''temp-init\\\\.gitignore'' -Destination ''.'' -Force; Copy-Item -Path ''temp-init\\\\.eslintrc.json'' -Destination ''.'' -Force; Remove-Item -Path ''temp-init'' -Recurse -Force\")",
+      "Bash(npm install:*)",
+      "Bash(taskkill:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: MVP Cuentos IA - AI-powered children''s story generator\n\n- Landing page with hero, features, and CTA sections\n- User authentication with NextAuth \\(email/password + Google OAuth ready\\)\n- Story creation form with customization options \\(name, age, theme, tone, traits\\)\n- AI story generation using GPT-4 for text and DALL-E 3 for illustrations\n- Story viewer with page carousel and navigation\n- Inline story editor with image regeneration\n- PDF download with cover and illustrated pages\n- Private sharing via expiring links\n- Library with search and filtering\n- User profile with settings\n- Content moderation and safety filters\n- Freemium model \\(1 free story/day, currently disabled for testing\\)\n- Responsive design with Tailwind CSS\n- Database using Turso \\(libsql\\) for Vercel compatibility\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(winget install:*)",
+      "Bash(git config:*)",
+      "Bash(cmdkey /list:*)",
+      "Bash(findstr:*)",
+      "Bash(npx vercel whoami)",
+      "Bash(npx vercel deploy:*)",
+      "Bash(vercel login:*)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel deploy:*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" auth login -p https -h github.com -w)",
+      "Bash(npm run dev:*)"
+    ]
+  }
+}

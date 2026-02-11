@@ -38,6 +38,11 @@ export function buildImagePrompt(params: {
   childName: string;
   ageGroup: string;
   pageNumber: number;
+  artStyle?: string;
+  colorPalette?: string;
 }): string {
-  return `Children's book illustration, watercolor style, warm and vibrant colors, whimsical and friendly atmosphere. Scene: ${params.sceneDescription}. The main character is a child named ${params.childName}, approximately ${params.ageGroup} years old. Style: soft rounded shapes, gentle lighting, safe and cheerful for children, storybook quality illustration. No text or words in the image. 1024x1024.`;
+  const stylePrompt = params.artStyle || 'watercolor illustration, soft brushstrokes, gentle color washes';
+  const colorPrompt = params.colorPalette || 'warm color palette with oranges, yellows, and reds';
+
+  return `Children's book illustration, ${stylePrompt}, ${colorPrompt}, whimsical and friendly atmosphere. Scene: ${params.sceneDescription}. The main character is a child named ${params.childName}, approximately ${params.ageGroup} years old. Style: soft rounded shapes, gentle lighting, safe and cheerful for children, storybook quality illustration. No text or words in the image. 1024x1024.`;
 }

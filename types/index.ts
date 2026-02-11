@@ -77,9 +77,13 @@ export interface CreateStoryInput {
   customTheme?: string;
   tone: string;
   length: string;
+  artStyle?: string;
+  colorPalette?: string;
   traits?: {
     mascota?: string;
     colorFavorito?: string;
+    artStyle?: string;
+    colorPalette?: string;
   };
 }
 

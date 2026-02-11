@@ -57,6 +57,8 @@ export async function generatePageImage(params: {
   childName: string;
   ageGroup: string;
   pageNumber: number;
+  artStyle?: string;
+  colorPalette?: string;
 }): Promise<string> {
   const prompt = buildImagePrompt(params);
 
@@ -69,6 +71,28 @@ export async function generatePageImage(params: {
   });
 
   return response.data?.[0]?.url || '';
+}
+
+// Generate all images in parallel for faster processing
+export async function generateAllImagesParallel(pages: Array<{
+  sceneDescription: string;
+  childName: string;
+  ageGroup: string;
+  pageNumber: number;
+  artStyle?: string;
+  colorPalette?: string;
+}>): Promise<Array<{ pageNumber: number; url: string | null; error?: string }>> {
+  const promises = pages.map(async (page) => {
+    try {
+      const url = await generatePageImage(page);
+      return { pageNumber: page.pageNumber, url };
+    } catch (err) {
+      console.error(`Image generation failed for page ${page.pageNumber}:`, err);
+      return { pageNumber: page.pageNumber, url: null, error: (err as Error).message };
+    }
+  });
+
+  return Promise.all(promises);
 }
 
 export async function downloadAndSaveImage(

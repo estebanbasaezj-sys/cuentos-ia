@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { v4 as uuid } from 'uuid';
 import db, { initializeDb } from '@/lib/db';
 import { authOptions } from '@/lib/auth';
-import { generateStoryText, generatePageImage, downloadAndSaveImage } from '@/lib/openai';
+import { generateStoryText, generateAllImagesParallel, downloadAndSaveImage } from '@/lib/openai';
 import { moderateText } from '@/lib/moderation';
 import { buildImagePrompt } from '@/lib/prompts';
 import type { Story } from '@/types';
@@ -66,46 +66,54 @@ async function generateStoryAsync(storyId: string, story: Story) {
   // Save title
   await db.run('UPDATE stories SET title = ?, generation_progress = 30 WHERE id = ?', storyContent.titulo, storyId);
 
-  // Step 2: Generate images
-  await db.run('UPDATE stories SET status = ? WHERE id = ?', 'generating_images', storyId);
+  // Step 2: Generate images in PARALLEL for speed
+  await db.run('UPDATE stories SET status = ?, generation_progress = 40 WHERE id = ?', 'generating_images', storyId);
 
-  const totalPages = storyContent.paginas.length;
+  // Extract art style and color palette from traits if available
+  const artStyle = traits?.artStyle;
+  const colorPalette = traits?.colorPalette;
 
-  for (let i = 0; i < totalPages; i++) {
-    const page = storyContent.paginas[i];
+  // Prepare all pages for parallel generation
+  const imageRequests = storyContent.paginas.map((page) => ({
+    sceneDescription: page.descripcion_escena,
+    childName: story.child_name,
+    ageGroup: story.child_age_group,
+    pageNumber: page.numero,
+    artStyle,
+    colorPalette,
+  }));
+
+  // Generate ALL images in parallel (much faster!)
+  const imageResults = await generateAllImagesParallel(imageRequests);
+
+  await db.run('UPDATE stories SET generation_progress = 80 WHERE id = ?', storyId);
+
+  // Download and save all images, then insert pages
+  for (const page of storyContent.paginas) {
+    const imageResult = imageResults.find((r) => r.pageNumber === page.numero);
+    let localPath: string | null = null;
+
+    if (imageResult?.url) {
+      try {
+        localPath = await downloadAndSaveImage(imageResult.url, storyId, page.numero);
+      } catch (downloadErr) {
+        console.error(`Image download failed for page ${page.numero}:`, downloadErr);
+      }
+    }
 
     const imagePrompt = buildImagePrompt({
       sceneDescription: page.descripcion_escena,
       childName: story.child_name,
       ageGroup: story.child_age_group,
       pageNumber: page.numero,
+      artStyle,
+      colorPalette,
     });
-
-    let localPath: string | null = null;
-
-    try {
-      const imageUrl = await generatePageImage({
-        sceneDescription: page.descripcion_escena,
-        childName: story.child_name,
-        ageGroup: story.child_age_group,
-        pageNumber: page.numero,
-      });
-
-      if (imageUrl) {
-        localPath = await downloadAndSaveImage(imageUrl, storyId, page.numero);
-      }
-    } catch (imgErr) {
-      console.error(`Image generation failed for page ${page.numero}:`, imgErr);
-      // Continue without image - not critical
-    }
 
     await db.run(
       'INSERT INTO pages (id, story_id, page_number, text, image_url, image_prompt) VALUES (?, ?, ?, ?, ?, ?)',
       uuid(), storyId, page.numero, page.texto, localPath, imagePrompt
     );
-
-    const progress = 30 + Math.round(((i + 1) / totalPages) * 70);
-    await db.run('UPDATE stories SET generation_progress = ? WHERE id = ?', progress, storyId);
   }
 
   // Done
