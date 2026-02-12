@@ -3,7 +3,9 @@ import { buildStoryPrompt, buildImagePrompt } from './prompts';
 import fs from 'fs';
 import path from 'path';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 interface StoryPage {
   numero: number;
@@ -26,7 +28,7 @@ export async function generateStoryText(params: {
 }): Promise<StoryResult> {
   const pageCount = params.length === 'corto' ? 4 : 6;
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -62,7 +64,7 @@ export async function generatePageImage(params: {
 }): Promise<string> {
   const prompt = buildImagePrompt(params);
 
-  const response = await openai.images.generate({
+  const response = await getOpenAI().images.generate({
     model: 'dall-e-3',
     prompt,
     n: 1,
