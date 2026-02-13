@@ -5,8 +5,12 @@ import db, { initializeDb } from '@/lib/db';
 import { authOptions } from '@/lib/auth';
 import { createStorySchema } from '@/lib/validators';
 import { moderateInputs } from '@/lib/moderation';
-import { checkUsage, incrementUsage } from '@/lib/rate-limit';
+import { canGenerateStory, canSaveToLibrary } from '@/lib/feature-gate';
+import { getOrCreateWallet } from '@/lib/wallet';
+import { estimateStoryCost } from '@/lib/monetization';
+import { trackEvent } from '@/lib/telemetry';
 import type { Story } from '@/types';
+import type { ImageQuality } from '@/lib/monetization';
 
 export async function POST(req: Request) {
   try {
@@ -27,12 +31,24 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check rate limit
-    const usage = await checkUsage(userId);
-    if (!usage.isSubscribed && usage.remaining <= 0) {
+    const artStyle = parsed.data.artStyle || body.traits?.artStyle || 'watercolor';
+
+    // Feature gating
+    const gateResult = await canGenerateStory(userId, parsed.data.length, artStyle);
+    if (!gateResult.allowed) {
+      await trackEvent('paywall_viewed', userId, { reason: gateResult.reason });
       return NextResponse.json(
-        { error: 'Ya usaste tu cuento gratuito de hoy. Vuelve mañana o suscríbete para cuentos ilimitados.', usage },
-        { status: 429 }
+        { error: 'Limite alcanzado', gate: gateResult },
+        { status: 403 }
+      );
+    }
+
+    // Library limit
+    const libGate = await canSaveToLibrary(userId);
+    if (!libGate.allowed) {
+      return NextResponse.json(
+        { error: 'Biblioteca llena', gate: libGate },
+        { status: 403 }
       );
     }
 
@@ -46,11 +62,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: modResult.message }, { status: 400 });
     }
 
+    // Calculate credit cost and image quality
+    const wallet = await getOrCreateWallet(userId);
+    const imageQuality: ImageQuality = wallet.plan_type === 'premium' ? 'high' : 'standard';
+    const creditCost = wallet.plan_type === 'premium'
+      ? estimateStoryCost(parsed.data.length, imageQuality)
+      : 0;
+
     const storyId = uuid();
 
+    // Build traits JSON including artStyle and colorPalette
+    const traits = {
+      ...(parsed.data.traits || {}),
+      artStyle: parsed.data.artStyle || body.traits?.artStyle,
+      colorPalette: parsed.data.colorPalette || body.traits?.colorPalette,
+    };
+
     await db.run(
-      `INSERT INTO stories (id, user_id, child_name, child_age_group, theme, tone, length, traits, status, generation_progress)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'queued', 0)`,
+      `INSERT INTO stories (id, user_id, child_name, child_age_group, theme, tone, length, traits, status, generation_progress, credit_cost, image_quality)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'queued', 0, ?, ?)`,
       storyId,
       userId,
       parsed.data.childName,
@@ -58,11 +88,17 @@ export async function POST(req: Request) {
       parsed.data.theme,
       parsed.data.tone,
       parsed.data.length,
-      parsed.data.traits ? JSON.stringify(parsed.data.traits) : null
+      JSON.stringify(traits),
+      creditCost,
+      imageQuality
     );
 
-    // Increment usage
-    await incrementUsage(userId);
+    await trackEvent('story_generate_started', userId, {
+      length: parsed.data.length,
+      creditCost,
+      artStyle,
+      imageQuality,
+    });
 
     return NextResponse.json({ storyId }, { status: 201 });
   } catch (error) {

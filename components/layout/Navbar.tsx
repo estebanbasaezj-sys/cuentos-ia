@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import CreditCounter from "@/components/CreditCounter";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -30,6 +31,7 @@ export default function Navbar() {
               <Link href="/perfil" className="text-gray-600 hover:text-purple-700 font-medium transition-colors">
                 Mi perfil
               </Link>
+              <CreditCounter />
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="text-sm text-gray-500 hover:text-red-500 transition-colors"

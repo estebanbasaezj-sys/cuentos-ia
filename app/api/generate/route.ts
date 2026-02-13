@@ -7,7 +7,11 @@ import { authOptions } from '@/lib/auth';
 import { generateStoryText, generateAllImagesParallel, downloadAndSaveImage } from '@/lib/openai';
 import { moderateText } from '@/lib/moderation';
 import { buildImagePrompt } from '@/lib/prompts';
+import { deductCredits } from '@/lib/wallet';
+import { CREDIT_COSTS, getImageCost } from '@/lib/monetization';
+import { trackEvent } from '@/lib/telemetry';
 import type { Story } from '@/types';
+import type { ImageQuality } from '@/lib/monetization';
 
 export const maxDuration = 60;
 
@@ -47,81 +51,127 @@ export async function POST(req: Request) {
 }
 
 async function generateStoryAsync(storyId: string, story: Story) {
-  // Step 1: Generate text
-  await db.run('UPDATE stories SET status = ?, generation_progress = 10 WHERE id = ?', 'generating_text', storyId);
+  const userId = story.user_id;
+  const imageQuality = (story.image_quality || 'standard') as ImageQuality;
+  let creditsSpent = 0;
 
-  const traits = story.traits ? JSON.parse(story.traits) : undefined;
-  const storyContent = await generateStoryText({
-    childName: story.child_name,
-    ageGroup: story.child_age_group,
-    theme: story.theme,
-    tone: story.tone,
-    length: story.length,
-    traits,
-  });
+  try {
+    // Step 1: Generate text
+    await db.run('UPDATE stories SET status = ?, generation_progress = 10 WHERE id = ?', 'generating_text', storyId);
 
-  // Moderate output
-  const allText = storyContent.paginas.map((p) => p.texto).join(' ');
-  const modResult = moderateText(allText);
-  if (!modResult.safe) {
-    throw new Error('El contenido generado no pasó los filtros de seguridad. Intenta con otro tema.');
-  }
+    const traits = story.traits ? JSON.parse(story.traits) : undefined;
+    const storyContent = await generateStoryText({
+      childName: story.child_name,
+      ageGroup: story.child_age_group,
+      theme: story.theme,
+      tone: story.tone,
+      length: story.length,
+      traits,
+    });
 
-  // Save title
-  await db.run('UPDATE stories SET title = ?, generation_progress = 30 WHERE id = ?', storyContent.titulo, storyId);
-
-  // Step 2: Generate images in PARALLEL for speed
-  await db.run('UPDATE stories SET status = ?, generation_progress = 40 WHERE id = ?', 'generating_images', storyId);
-
-  // Extract art style and color palette from traits if available
-  const artStyle = traits?.artStyle;
-  const colorPalette = traits?.colorPalette;
-
-  // Prepare all pages for parallel generation
-  const imageRequests = storyContent.paginas.map((page) => ({
-    sceneDescription: page.descripcion_escena,
-    childName: story.child_name,
-    ageGroup: story.child_age_group,
-    pageNumber: page.numero,
-    artStyle,
-    colorPalette,
-  }));
-
-  // Generate ALL images in parallel (much faster!)
-  const imageResults = await generateAllImagesParallel(imageRequests);
-
-  await db.run('UPDATE stories SET generation_progress = 80 WHERE id = ?', storyId);
-
-  // Download and save all images, then insert pages
-  for (const page of storyContent.paginas) {
-    const imageResult = imageResults.find((r) => r.pageNumber === page.numero);
-    let localPath: string | null = null;
-
-    if (imageResult?.url) {
-      try {
-        localPath = await downloadAndSaveImage(imageResult.url, storyId, page.numero);
-      } catch (downloadErr) {
-        console.error(`Image download failed for page ${page.numero}:`, downloadErr);
-        // Use the original DALL-E URL as fallback
-        localPath = imageResult.url;
-      }
+    // Moderate output
+    const allText = storyContent.paginas.map((p) => p.texto).join(' ');
+    const modResult = moderateText(allText);
+    if (!modResult.safe) {
+      throw new Error('El contenido generado no pasó los filtros de seguridad. Intenta con otro tema.');
     }
 
-    const imagePrompt = buildImagePrompt({
+    // Deduct text generation credits (premium only)
+    const textDeducted = await deductCredits(
+      userId, CREDIT_COSTS.generateText, 'story_text', storyId, 'Generacion de texto'
+    );
+    if (textDeducted) creditsSpent += CREDIT_COSTS.generateText;
+
+    // Save title
+    await db.run('UPDATE stories SET title = ?, generation_progress = 30 WHERE id = ?', storyContent.titulo, storyId);
+
+    // Step 2: Generate images in PARALLEL for speed
+    await db.run('UPDATE stories SET status = ?, generation_progress = 40 WHERE id = ?', 'generating_images', storyId);
+
+    // Extract art style and color palette from traits if available
+    const artStyle = traits?.artStyle;
+    const colorPalette = traits?.colorPalette;
+
+    // Prepare all pages for parallel generation
+    const imageRequests = storyContent.paginas.map((page) => ({
       sceneDescription: page.descripcion_escena,
       childName: story.child_name,
       ageGroup: story.child_age_group,
       pageNumber: page.numero,
       artStyle,
       colorPalette,
+    }));
+
+    // Generate ALL images in parallel (much faster!)
+    const imageResults = await generateAllImagesParallel(imageRequests);
+
+    // Deduct image credits for each successfully generated image
+    const imgCost = getImageCost(imageQuality);
+    for (const result of imageResults) {
+      if (result.url) {
+        const imgDeducted = await deductCredits(
+          userId, imgCost, 'story_image', storyId,
+          `Imagen pagina ${result.pageNumber}`
+        );
+        if (imgDeducted) creditsSpent += imgCost;
+      }
+    }
+
+    await db.run('UPDATE stories SET generation_progress = 80 WHERE id = ?', storyId);
+
+    // Download and save all images, then insert pages
+    for (const page of storyContent.paginas) {
+      const imageResult = imageResults.find((r) => r.pageNumber === page.numero);
+      let localPath: string | null = null;
+
+      if (imageResult?.url) {
+        try {
+          localPath = await downloadAndSaveImage(imageResult.url, storyId, page.numero);
+        } catch (downloadErr) {
+          console.error(`Image download failed for page ${page.numero}:`, downloadErr);
+          localPath = imageResult.url;
+        }
+      }
+
+      const imagePrompt = buildImagePrompt({
+        sceneDescription: page.descripcion_escena,
+        childName: story.child_name,
+        ageGroup: story.child_age_group,
+        pageNumber: page.numero,
+        artStyle,
+        colorPalette,
+      });
+
+      await db.run(
+        'INSERT INTO pages (id, story_id, page_number, text, image_url, image_prompt) VALUES (?, ?, ?, ?, ?, ?)',
+        uuid(), storyId, page.numero, page.texto, localPath, imagePrompt
+      );
+    }
+
+    // Done
+    await db.run('UPDATE stories SET status = ?, generation_progress = 100 WHERE id = ?', 'ready', storyId);
+
+    await trackEvent('story_generate_completed', userId, {
+      storyId,
+      creditsSpent,
+      imageQuality,
+      pages: storyContent.paginas.length,
     });
 
-    await db.run(
-      'INSERT INTO pages (id, story_id, page_number, text, image_url, image_prompt) VALUES (?, ?, ?, ?, ?, ?)',
-      uuid(), storyId, page.numero, page.texto, localPath, imagePrompt
-    );
+    if (creditsSpent > 0) {
+      await trackEvent('credits_spent', userId, {
+        amount: creditsSpent,
+        source: 'story_generation',
+        storyId,
+      });
+    }
+  } catch (err) {
+    // Refund credits if generation failed partway through
+    if (creditsSpent > 0) {
+      const { addPurchasedCredits } = await import('@/lib/wallet');
+      await addPurchasedCredits(userId, creditsSpent, `refund_${storyId}`);
+      console.log(`Refunded ${creditsSpent} credits for failed story ${storyId}`);
+    }
+    throw err;
   }
-
-  // Done
-  await db.run('UPDATE stories SET status = ?, generation_progress = 100 WHERE id = ?', 'ready', storyId);
 }

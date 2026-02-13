@@ -109,10 +109,54 @@ export async function initializeDb() {
     'CREATE INDEX IF NOT EXISTS idx_pages_story_id ON pages(story_id)',
     'CREATE INDEX IF NOT EXISTS idx_shares_token ON shares(share_token)',
     'CREATE INDEX IF NOT EXISTS idx_shares_story_id ON shares(story_id)',
+    // --- Monetizacion ---
+    `CREATE TABLE IF NOT EXISTS wallets (
+        id TEXT PRIMARY KEY,
+        user_id TEXT UNIQUE NOT NULL,
+        plan_type TEXT DEFAULT 'free',
+        credits_balance INTEGER DEFAULT 0,
+        monthly_credits_remaining INTEGER DEFAULT 0,
+        monthly_credits_total INTEGER DEFAULT 0,
+        renewal_date TEXT,
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT,
+        subscription_status TEXT DEFAULT 'none',
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+    )`,
+    'CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON wallets(user_id)',
+    `CREATE TABLE IF NOT EXISTS credit_ledger (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        balance_after INTEGER NOT NULL,
+        source TEXT NOT NULL,
+        reference_id TEXT,
+        description TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    'CREATE INDEX IF NOT EXISTS idx_ledger_user_id ON credit_ledger(user_id)',
+    `CREATE TABLE IF NOT EXISTS telemetry_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        event_type TEXT NOT NULL,
+        event_data TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    'CREATE INDEX IF NOT EXISTS idx_telemetry_type ON telemetry_events(event_type)',
   ];
 
   for (const stmt of statements) {
     await db.execute(stmt);
+  }
+
+  // Migraciones: agregar columnas a tablas existentes
+  const migrations = [
+    "ALTER TABLE stories ADD COLUMN credit_cost INTEGER DEFAULT 0",
+    "ALTER TABLE stories ADD COLUMN image_quality TEXT DEFAULT 'standard'",
+  ];
+  for (const stmt of migrations) {
+    try { await db.execute(stmt); } catch { /* columna ya existe */ }
   }
 
   globalForDb._initialized = true;

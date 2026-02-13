@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import type { StoryWithPages, Page } from "@/types";
+import type { StoryWithPages, Page, UsageInfo } from "@/types";
 
 export default function CuentoPage() {
   const { storyId } = useParams<{ storyId: string }>();
@@ -16,13 +16,20 @@ export default function CuentoPage() {
   const [showReport, setShowReport] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
 
   useEffect(() => {
     fetch(`/api/stories/${storyId}`)
       .then((r) => r.json())
       .then((d) => { setStory(d.story); setLoading(false); })
       .catch(() => setLoading(false));
+    fetch("/api/usage")
+      .then((r) => r.json())
+      .then(setUsage)
+      .catch(() => {});
   }, [storyId]);
+
+  const isPremium = usage?.planType === "premium";
 
   const handleDownloadPDF = async () => {
     setPdfLoading(true);
@@ -64,7 +71,7 @@ export default function CuentoPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este cuento?")) return;
+    if (!confirm("Estas seguro de que quieres eliminar este cuento?")) return;
     await fetch(`/api/stories/${storyId}`, { method: "DELETE" });
     router.push("/biblioteca");
   };
@@ -103,7 +110,11 @@ export default function CuentoPage() {
             Editar
           </Link>
           <button onClick={handleDownloadPDF} className="btn-secondary !py-2 !px-4 text-sm" disabled={pdfLoading}>
-            {pdfLoading ? "Generando..." : "PDF"}
+            {pdfLoading
+              ? "Generando..."
+              : isPremium
+                ? "PDF (3 cr)"
+                : "PDF (con marca de agua)"}
           </button>
           <button onClick={() => setShowShare(!showShare)} className="btn-secondary !py-2 !px-4 text-sm">
             Compartir
@@ -135,7 +146,7 @@ export default function CuentoPage() {
             <div className="flex gap-2 flex-wrap">
               {[1, 3, 7, 14, 30].map((d) => (
                 <button key={d} onClick={() => handleShare(d)} className="btn-secondary text-sm !py-1.5 !px-3">
-                  {d} día{d > 1 ? "s" : ""}
+                  {d} dia{d > 1 ? "s" : ""}
                 </button>
               ))}
             </div>
@@ -149,7 +160,7 @@ export default function CuentoPage() {
           <div className="relative w-full aspect-square bg-purple-50">
             <img
               src={page.image_url}
-              alt={`Página ${page.page_number}`}
+              alt={`Pagina ${page.page_number}`}
               className="w-full h-full object-cover"
             />
           </div>
@@ -169,7 +180,7 @@ export default function CuentoPage() {
           ← Anterior
         </button>
         <span className="text-sm text-gray-500">
-          Página {currentPage + 1} de {story.pages.length}
+          Pagina {currentPage + 1} de {story.pages.length}
         </span>
         <button
           onClick={() => setCurrentPage(Math.min(story.pages.length - 1, currentPage + 1))}
@@ -218,7 +229,7 @@ export default function CuentoPage() {
             rows={3}
             value={reportReason}
             onChange={(e) => setReportReason(e.target.value)}
-            placeholder="Describe por qué el contenido es inapropiado..."
+            placeholder="Describe por que el contenido es inapropiado..."
           />
           <div className="flex gap-2 mt-3">
             <button onClick={handleReport} className="btn-danger text-sm">Enviar reporte</button>

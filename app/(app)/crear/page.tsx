@@ -3,12 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AGE_GROUPS, THEMES, TONES, LENGTHS, ART_STYLES, COLOR_PALETTES } from "@/lib/constants";
+import Paywall from "@/components/Paywall";
+import type { UsageInfo, GateResult } from "@/types";
 
 export default function CrearCuentoPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [remaining, setRemaining] = useState<number | null>(null);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
+  const [paywallGate, setPaywallGate] = useState<GateResult | null>(null);
+  const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
 
   const [childName, setChildName] = useState("");
   const [childAgeGroup, setChildAgeGroup] = useState("");
@@ -24,9 +28,43 @@ export default function CrearCuentoPage() {
   useEffect(() => {
     fetch("/api/usage")
       .then((r) => r.json())
-      .then((d) => setRemaining(d.remaining ?? null))
+      .then(setUsage)
       .catch(() => {});
   }, []);
+
+  // Estimate cost when length changes (for premium users)
+  useEffect(() => {
+    if (usage?.planType === "premium") {
+      fetch("/api/estimate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ length }),
+      })
+        .then((r) => r.json())
+        .then((d) => setEstimatedCost(d.totalCost))
+        .catch(() => {});
+    }
+  }, [length, usage?.planType]);
+
+  const isPremium = usage?.planType === "premium";
+
+  const handleSelectLength = (val: string) => {
+    const l = LENGTHS.find((x) => x.value === val);
+    if (l?.premium && !isPremium) {
+      setPaywallGate({ allowed: false, reason: "premium_length", paywallType: "upgrade" });
+      return;
+    }
+    setLength(val);
+  };
+
+  const handleSelectArtStyle = (val: string) => {
+    const s = ART_STYLES.find((x) => x.value === val);
+    if (s?.premium && !isPremium) {
+      setPaywallGate({ allowed: false, reason: "premium_style", paywallType: "upgrade" });
+      return;
+    }
+    setArtStyle(val);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +89,8 @@ export default function CrearCuentoPage() {
           theme: finalTheme,
           tone,
           length,
+          artStyle,
+          colorPalette,
           traits: {
             ...(mascota && { mascota }),
             ...(colorFavorito && { colorFavorito }),
@@ -62,6 +102,11 @@ export default function CrearCuentoPage() {
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 403 && data.gate) {
+          setPaywallGate(data.gate);
+          setLoading(false);
+          return;
+        }
         setError(data.error || "Error al crear cuento");
         setLoading(false);
         return;
@@ -77,25 +122,33 @@ export default function CrearCuentoPage() {
       // Step 3: Redirect to progress page
       router.push(`/generando/${data.storyId}`);
     } catch {
-      setError("Error de conexión. Intenta de nuevo.");
+      setError("Error de conexion. Intenta de nuevo.");
       setLoading(false);
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto">
+      {paywallGate && (
+        <Paywall gate={paywallGate} onClose={() => setPaywallGate(null)} />
+      )}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-purple-800">Crear un nuevo cuento</h1>
         <p className="text-gray-500 mt-1">Personaliza la historia para tu hijo/a</p>
-        {remaining !== null && (
+        {usage && (
           <div className={`mt-3 inline-block px-3 py-1 rounded-full text-sm font-medium ${
-            remaining > 0
-              ? "bg-green-100 text-green-700"
-              : "bg-orange-100 text-orange-700"
+            isPremium
+              ? "bg-purple-100 text-purple-700"
+              : usage.freeRemaining > 0
+                ? "bg-green-100 text-green-700"
+                : "bg-orange-100 text-orange-700"
           }`}>
-            {remaining > 0
-              ? `${remaining} cuento${remaining > 1 ? "s" : ""} gratuito${remaining > 1 ? "s" : ""} disponible${remaining > 1 ? "s" : ""} hoy`
-              : "Ya usaste tu cuento gratuito de hoy"}
+            {isPremium
+              ? `Plan Premium - ${usage.totalCreditsAvailable} creditos disponibles`
+              : usage.freeRemaining > 0
+                ? `${usage.freeRemaining} cuento${usage.freeRemaining > 1 ? "s" : ""} gratuito${usage.freeRemaining > 1 ? "s" : ""} esta semana`
+                : "Ya usaste tu cuento gratuito de esta semana"}
           </div>
         )}
       </div>
@@ -108,13 +161,13 @@ export default function CrearCuentoPage() {
 
       <form onSubmit={handleSubmit} className="card space-y-5">
         <div>
-          <label className="label-field">Nombre del niño/a *</label>
+          <label className="label-field">Nombre del ni&ntilde;o/a *</label>
           <input
             type="text"
             className="input-field"
             value={childName}
             onChange={(e) => setChildName(e.target.value)}
-            placeholder="Ej: Sofía"
+            placeholder="Ej: Sof&iacute;a"
             required
             maxLength={30}
           />
@@ -189,25 +242,31 @@ export default function CrearCuentoPage() {
 
         <div>
           <label className="label-field">Largo del cuento</label>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             {LENGTHS.map((l) => (
               <label
                 key={l.value}
-                className={`px-4 py-2 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium ${
+                className={`px-4 py-2 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium relative ${
                   length === l.value
                     ? "border-purple-500 bg-purple-50 text-purple-700"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-purple-200"
+                    : l.premium && !isPremium
+                      ? "border-gray-200 bg-gray-50 text-gray-400 cursor-pointer"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-purple-200"
                 }`}
+                onClick={() => handleSelectLength(l.value)}
               >
                 <input
                   type="radio"
                   name="length"
                   value={l.value}
                   checked={length === l.value}
-                  onChange={(e) => setLength(e.target.value)}
+                  onChange={() => {}}
                   className="sr-only"
                 />
                 {l.label}
+                {l.premium && !isPremium && (
+                  <span className="ml-1.5 text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full">Premium</span>
+                )}
               </label>
             ))}
           </div>
@@ -215,26 +274,32 @@ export default function CrearCuentoPage() {
 
         {/* Image style options */}
         <div>
-          <label className="label-field">Estilo de ilustración</label>
+          <label className="label-field">Estilo de ilustraci&oacute;n</label>
           <div className="flex gap-2 flex-wrap">
             {ART_STYLES.map((s) => (
               <label
                 key={s.value}
-                className={`px-3 py-2 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium ${
+                className={`px-3 py-2 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium relative ${
                   artStyle === s.value
                     ? "border-purple-500 bg-purple-50 text-purple-700"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-purple-200"
+                    : s.premium && !isPremium
+                      ? "border-gray-200 bg-gray-50 text-gray-400 cursor-pointer"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-purple-200"
                 }`}
+                onClick={() => handleSelectArtStyle(s.value)}
               >
                 <input
                   type="radio"
                   name="artStyle"
                   value={s.value}
                   checked={artStyle === s.value}
-                  onChange={(e) => setArtStyle(e.target.value)}
+                  onChange={() => {}}
                   className="sr-only"
                 />
                 {s.label}
+                {s.premium && !isPremium && (
+                  <span className="ml-1.5 text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full">Premium</span>
+                )}
               </label>
             ))}
           </div>
@@ -297,12 +362,19 @@ export default function CrearCuentoPage() {
           </div>
         </details>
 
+        {/* Cost estimate for premium */}
+        {isPremium && estimatedCost !== null && (
+          <div className="bg-purple-50 rounded-xl px-4 py-3 text-sm text-purple-700">
+            Este cuento costara aproximadamente <strong>{estimatedCost} creditos</strong>
+          </div>
+        )}
+
         <button
           type="submit"
           className="btn-primary w-full text-lg !py-3"
-          disabled={loading || (remaining !== null && remaining <= 0)}
+          disabled={loading || (!isPremium && usage !== null && usage.freeRemaining <= 0)}
         >
-          {loading ? "Creando cuento..." : "Generar cuento"}
+          {loading ? "Creando cuento..." : isPremium ? `Generar cuento (~${estimatedCost || "?"} cr)` : "Generar cuento"}
         </button>
       </form>
     </div>

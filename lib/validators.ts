@@ -9,9 +9,12 @@ export const createStorySchema = z.object({
   tone: z.enum(['tierno', 'divertido', 'educativo'], {
     error: 'Selecciona un tono',
   }),
-  length: z.enum(['corto', 'medio'], {
+  length: z.enum(['corto', 'medio', 'largo'], {
     error: 'Selecciona un largo',
   }),
+  artStyle: z.string().optional(),
+  colorPalette: z.string().optional(),
+  imageQuality: z.enum(['standard', 'high']).optional(),
   traits: z.object({
     mascota: z.string().max(30).optional(),
     colorFavorito: z.string().max(30).optional(),

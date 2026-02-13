@@ -26,6 +26,8 @@ export interface Story {
   generation_progress: number;
   error_message: string | null;
   flagged_count: number;
+  credit_cost: number;
+  image_quality: string;
   created_at: string;
   updated_at: string;
 }
@@ -88,9 +90,48 @@ export interface CreateStoryInput {
 }
 
 export interface UsageInfo {
-  storiesUsedToday: number;
-  limit: number;
-  remaining: number;
-  isSubscribed: boolean;
-  resetAt: string;
+  planType: 'free' | 'premium';
+  storiesThisWeek: number;
+  storiesThisMonth: number;
+  weeklyLimit: number;
+  monthlyLimit: number;
+  freeRemaining: number;
+  libraryCount: number;
+  libraryLimit: number;
+  monthlyCreditsRemaining: number;
+  purchasedCreditsBalance: number;
+  totalCreditsAvailable: number;
+  renewalDate: string | null;
+}
+
+export interface Wallet {
+  id: string;
+  user_id: string;
+  plan_type: 'free' | 'premium';
+  credits_balance: number;
+  monthly_credits_remaining: number;
+  monthly_credits_total: number;
+  renewal_date: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  subscription_status: 'none' | 'active' | 'canceled' | 'past_due';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreditLedgerEntry {
+  id: string;
+  user_id: string;
+  amount: number;
+  balance_after: number;
+  source: string;
+  reference_id: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+export interface GateResult {
+  allowed: boolean;
+  reason?: string;
+  paywallType?: 'upgrade' | 'topup';
 }

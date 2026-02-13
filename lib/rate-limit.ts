@@ -1,51 +1,49 @@
 import db from './db';
-import { format } from 'date-fns';
-import { FREE_STORIES_PER_DAY } from './constants';
+import { getOrCreateWallet, totalCredits } from './wallet';
+import { FREE_LIMITS } from './monetization';
+import { countStoriesThisMonth } from './feature-gate';
 import type { UsageInfo } from '@/types';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function checkUsage(userId: string): Promise<UsageInfo> {
-  // TODO: Desactivado temporalmente para testing - reactivar en producción
-  return { storiesUsedToday: 0, limit: 999, remaining: 999, isSubscribed: true, resetAt: '' };
+  const wallet = await getOrCreateWallet(userId);
 
-  /* CÓDIGO ORIGINAL - descomentar para producción:
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const user = await db.get<{
-    stories_today: number;
-    last_story_date: string | null;
-    is_subscribed: number;
-  }>('SELECT stories_today, last_story_date, is_subscribed FROM users WHERE id = ?', userId);
+  const weekResult = await db.get<{ cnt: number }>(
+    "SELECT COUNT(*) as cnt FROM stories WHERE user_id = ? AND created_at >= datetime('now', '-7 days')", userId
+  );
+  const monthResult = await db.get<{ cnt: number }>(
+    "SELECT COUNT(*) as cnt FROM stories WHERE user_id = ? AND created_at >= datetime('now', 'start of month')", userId
+  );
+  const libraryResult = await db.get<{ cnt: number }>(
+    "SELECT COUNT(*) as cnt FROM stories WHERE user_id = ? AND status = 'ready'", userId
+  );
 
-  if (!user) {
-    return { storiesUsedToday: 0, limit: FREE_STORIES_PER_DAY, remaining: 0, isSubscribed: false, resetAt: '' };
-  }
-
-  if (user.is_subscribed) {
-    return { storiesUsedToday: 0, limit: Infinity, remaining: Infinity, isSubscribed: true, resetAt: '' };
-  }
-
-  let storiesUsed = user.stories_today;
-  if (user.last_story_date !== today) {
-    storiesUsed = 0;
-    await db.run('UPDATE users SET stories_today = 0, last_story_date = ? WHERE id = ?', today, userId);
-  }
+  const storiesThisWeek = weekResult?.cnt || 0;
+  const storiesThisMonth = monthResult?.cnt || 0;
+  const libraryCount = libraryResult?.cnt || 0;
 
   return {
-    storiesUsedToday: storiesUsed,
-    limit: FREE_STORIES_PER_DAY,
-    remaining: Math.max(0, FREE_STORIES_PER_DAY - storiesUsed),
-    isSubscribed: false,
-    resetAt: `${today}T23:59:59`,
+    planType: wallet.plan_type as 'free' | 'premium',
+    storiesThisWeek,
+    storiesThisMonth,
+    weeklyLimit: FREE_LIMITS.storiesPerWeek,
+    monthlyLimit: FREE_LIMITS.storiesPerMonth,
+    freeRemaining: wallet.plan_type === 'free'
+      ? Math.max(0, FREE_LIMITS.storiesPerWeek - storiesThisWeek)
+      : Infinity,
+    libraryCount,
+    libraryLimit: wallet.plan_type === 'free' ? FREE_LIMITS.maxLibraryStories : Infinity,
+    monthlyCreditsRemaining: wallet.monthly_credits_remaining,
+    purchasedCreditsBalance: wallet.credits_balance,
+    totalCreditsAvailable: totalCredits(wallet),
+    renewalDate: wallet.renewal_date,
   };
-  */
 }
 
-// Mantener estas importaciones para cuando se reactive el código
-void FREE_STORIES_PER_DAY;
-void db;
-void format;
-
-export async function incrementUsage(userId: string): Promise<void> {
-  const today = format(new Date(), 'yyyy-MM-dd');
-  await db.run('UPDATE users SET stories_today = stories_today + 1, last_story_date = ? WHERE id = ?', today, userId);
+// No-op: ya no usamos el contador de stories_today
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function incrementUsage(_userId: string): Promise<void> {
+  // El conteo ahora se hace directamente desde la tabla stories
 }
+
+// Para compatibilidad: mantener export de countStoriesThisMonth
+export { countStoriesThisMonth };

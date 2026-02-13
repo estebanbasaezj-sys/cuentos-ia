@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Story } from "@/types";
+import type { Story, UsageInfo } from "@/types";
 
 export default function BibliotecaPage() {
   const [stories, setStories] = useState<Story[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
 
   const fetchStories = async (q = "") => {
     setLoading(true);
@@ -21,6 +22,10 @@ export default function BibliotecaPage() {
 
   useEffect(() => {
     fetchStories();
+    fetch("/api/usage")
+      .then((r) => r.json())
+      .then(setUsage)
+      .catch(() => {});
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -51,17 +56,38 @@ export default function BibliotecaPage() {
     }
   };
 
+  const isFree = usage?.planType === "free";
+  const nearLimit = isFree && usage && usage.libraryCount >= (usage.libraryLimit - 2);
+  const atLimit = isFree && usage && usage.libraryCount >= usage.libraryLimit;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-purple-800">Mi biblioteca</h1>
-          <p className="text-gray-500 mt-1">{stories.length} cuento{stories.length !== 1 ? "s" : ""}</p>
+          <p className="text-gray-500 mt-1">
+            {stories.length} cuento{stories.length !== 1 ? "s" : ""}
+            {isFree && usage ? ` de ${usage.libraryLimit} max` : ""}
+          </p>
         </div>
         <Link href="/crear" className="btn-primary">
           + Nuevo cuento
         </Link>
       </div>
+
+      {/* Library limit warning */}
+      {nearLimit && !atLimit && (
+        <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mb-6 text-sm text-orange-700">
+          Te quedan pocos espacios en tu biblioteca ({usage!.libraryCount}/{usage!.libraryLimit}).{" "}
+          <Link href="/precios" className="font-medium underline">Upgrade a Premium</Link> para almacenar cuentos ilimitados.
+        </div>
+      )}
+      {atLimit && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-6 text-sm text-red-700">
+          Tu biblioteca esta llena ({usage!.libraryCount}/{usage!.libraryLimit}). Elimina algun cuento o{" "}
+          <Link href="/precios" className="font-medium underline">upgrade a Premium</Link> para continuar.
+        </div>
+      )}
 
       {/* Search */}
       <form onSubmit={handleSearch} className="mb-6">
@@ -69,7 +95,7 @@ export default function BibliotecaPage() {
           <input
             type="text"
             className="input-field"
-            placeholder="Buscar por nombre o título..."
+            placeholder="Buscar por nombre o titulo..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -86,8 +112,8 @@ export default function BibliotecaPage() {
       ) : stories.length === 0 ? (
         <div className="text-center py-16 card">
           <div className="text-5xl mb-4">📚</div>
-          <h2 className="text-xl font-bold text-gray-700 mb-2">Tu biblioteca está vacía</h2>
-          <p className="text-gray-500 mb-6">Crea tu primer cuento y aparecerá aquí.</p>
+          <h2 className="text-xl font-bold text-gray-700 mb-2">Tu biblioteca esta vacia</h2>
+          <p className="text-gray-500 mb-6">Crea tu primer cuento y aparecera aqui.</p>
           <Link href="/crear" className="btn-primary">
             Crear mi primer cuento
           </Link>
@@ -104,7 +130,7 @@ export default function BibliotecaPage() {
               >
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="font-bold text-purple-800 group-hover:text-purple-600 transition-colors line-clamp-1">
-                    {story.title || "Sin título"}
+                    {story.title || "Sin titulo"}
                   </h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>
                     {st.text}

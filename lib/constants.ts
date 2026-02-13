@@ -23,11 +23,10 @@ export const TONES = [
 ] as const;
 
 export const LENGTHS = [
-  { value: 'corto', label: 'Corto (4 páginas)', pages: 4 },
-  { value: 'medio', label: 'Medio (6 páginas)', pages: 6 },
+  { value: 'corto', label: 'Corto (4 páginas)', pages: 4, premium: false },
+  { value: 'medio', label: 'Medio (6 páginas)', pages: 6, premium: true },
+  { value: 'largo', label: 'Largo (8 páginas)', pages: 8, premium: true },
 ] as const;
-
-export const FREE_STORIES_PER_DAY = 1;
 
 export const SHARE_EXPIRATION_OPTIONS = [
   { value: 1, label: '1 día' },
@@ -38,11 +37,11 @@ export const SHARE_EXPIRATION_OPTIONS = [
 ] as const;
 
 export const ART_STYLES = [
-  { value: 'watercolor', label: 'Acuarela', prompt: 'watercolor illustration, soft brushstrokes, gentle color washes' },
-  { value: 'cartoon', label: 'Caricatura', prompt: 'cartoon style, bold outlines, playful and expressive characters' },
-  { value: 'digital', label: 'Digital moderno', prompt: 'modern digital art, clean lines, smooth gradients, vibrant' },
-  { value: 'storybook', label: 'Libro clásico', prompt: 'classic storybook illustration, detailed, timeless fairy tale style' },
-  { value: 'pastel', label: 'Pastel suave', prompt: 'soft pastel colors, dreamy atmosphere, gentle and calming' },
+  { value: 'watercolor', label: 'Acuarela', prompt: 'watercolor illustration, soft brushstrokes, gentle color washes', premium: false },
+  { value: 'cartoon', label: 'Caricatura', prompt: 'cartoon style, bold outlines, playful and expressive characters', premium: false },
+  { value: 'digital', label: 'Digital moderno', prompt: 'modern digital art, clean lines, smooth gradients, vibrant', premium: true },
+  { value: 'storybook', label: 'Libro clásico', prompt: 'classic storybook illustration, detailed, timeless fairy tale style', premium: true },
+  { value: 'pastel', label: 'Pastel suave', prompt: 'soft pastel colors, dreamy atmosphere, gentle and calming', premium: true },
 ] as const;
 
 export const COLOR_PALETTES = [

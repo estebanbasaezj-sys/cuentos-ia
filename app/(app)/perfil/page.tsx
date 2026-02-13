@@ -2,35 +2,43 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
-import type { UsageInfo } from "@/types";
+import Link from "next/link";
+import type { UsageInfo, Wallet, CreditLedgerEntry } from "@/types";
 
 export default function PerfilPage() {
   const { data: session } = useSession();
   const [usage, setUsage] = useState<UsageInfo | null>(null);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [ledger, setLedger] = useState<CreditLedgerEntry[]>([]);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    fetch("/api/usage")
+    fetch("/api/wallet")
       .then((r) => r.json())
-      .then(setUsage)
+      .then((d) => {
+        setUsage(d.usage);
+        setWallet(d.wallet);
+        setLedger(d.ledger || []);
+      })
       .catch(() => {});
   }, []);
 
   const handleDeleteAccount = async () => {
-    if (!confirm("¿Estás seguro? Se eliminarán todos tus cuentos y datos. Esta acción no se puede deshacer.")) return;
-    if (!confirm("Última confirmación: ¿Realmente quieres eliminar tu cuenta y todos tus datos?")) return;
+    if (!confirm("Estas seguro? Se eliminaran todos tus cuentos y datos. Esta accion no se puede deshacer.")) return;
+    if (!confirm("Ultima confirmacion: Realmente quieres eliminar tu cuenta y todos tus datos?")) return;
     setDeleting(true);
-    // In a real app, would call a delete account endpoint
-    alert("Función de eliminación disponible próximamente. Contacta soporte para eliminar tu cuenta.");
+    alert("Funcion de eliminacion disponible proximamente. Contacta soporte para eliminar tu cuenta.");
     setDeleting(false);
   };
+
+  const isPremium = usage?.planType === "premium";
 
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold text-purple-800 mb-8">Mi perfil</h1>
 
       <div className="card mb-6">
-        <h2 className="font-bold text-lg text-purple-700 mb-4">Información de cuenta</h2>
+        <h2 className="font-bold text-lg text-purple-700 mb-4">Informacion de cuenta</h2>
         <div className="space-y-3">
           <div>
             <span className="text-sm text-gray-500">Nombre:</span>
@@ -44,30 +52,69 @@ export default function PerfilPage() {
       </div>
 
       <div className="card mb-6">
-        <h2 className="font-bold text-lg text-purple-700 mb-4">Uso</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-lg text-purple-700">
+            {isPremium ? "Plan Premium" : "Plan Gratuito"}
+          </h2>
+          {isPremium ? (
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Premium</span>
+          ) : (
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Free</span>
+          )}
+        </div>
+
         {usage ? (
-          <div className="space-y-2">
-            <p className="text-sm">
-              <span className="text-gray-500">Plan:</span>{" "}
-              <span className="font-medium">{usage.isSubscribed ? "Premium" : "Gratuito"}</span>
-            </p>
-            {!usage.isSubscribed && (
+          <div className="space-y-3">
+            {isPremium ? (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-purple-50 rounded-xl p-3">
+                    <p className="text-xs text-purple-500">Creditos mensuales</p>
+                    <p className="text-xl font-bold text-purple-700">{usage.monthlyCreditsRemaining}</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-xl p-3">
+                    <p className="text-xs text-purple-500">Creditos comprados</p>
+                    <p className="text-xl font-bold text-purple-700">{usage.purchasedCreditsBalance}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Total disponible: <strong className="text-purple-700">{usage.totalCreditsAvailable} creditos</strong>
+                </p>
+                {wallet?.renewal_date && (
+                  <p className="text-xs text-gray-400">
+                    Renovacion: {new Date(wallet.renewal_date).toLocaleDateString("es-CL")}
+                  </p>
+                )}
+                <div className="flex gap-2 mt-2">
+                  <Link href="/precios#topup" className="btn-secondary text-sm !py-2">
+                    Comprar creditos
+                  </Link>
+                </div>
+              </>
+            ) : (
               <>
                 <p className="text-sm">
-                  <span className="text-gray-500">Cuentos usados hoy:</span>{" "}
-                  <span className="font-medium">{usage.storiesUsedToday} de {usage.limit}</span>
+                  <span className="text-gray-500">Cuentos esta semana:</span>{" "}
+                  <span className="font-medium">{usage.storiesThisWeek} de {usage.weeklyLimit}</span>
                 </p>
                 <p className="text-sm">
                   <span className="text-gray-500">Disponibles:</span>{" "}
-                  <span className="font-medium text-green-600">{usage.remaining}</span>
+                  <span className="font-medium text-green-600">{usage.freeRemaining}</span>
+                </p>
+                <p className="text-sm">
+                  <span className="text-gray-500">Biblioteca:</span>{" "}
+                  <span className="font-medium">{usage.libraryCount} de {usage.libraryLimit} cuentos</span>
                 </p>
                 <div className="mt-4 p-4 bg-purple-50 rounded-xl">
                   <p className="text-sm text-purple-700 font-medium mb-1">
-                    ¿Quieres más cuentos?
+                    Desbloquea todo con Premium
                   </p>
-                  <p className="text-xs text-purple-600">
-                    La suscripción premium estará disponible próximamente. ¡Gracias por tu paciencia!
+                  <p className="text-xs text-purple-600 mb-3">
+                    Cuentos ilimitados, todos los estilos, sin marca de agua en PDF, y mas.
                   </p>
+                  <Link href="/precios" className="btn-primary text-sm !py-2 !px-4">
+                    Ver planes
+                  </Link>
                 </div>
               </>
             )}
@@ -77,10 +124,34 @@ export default function PerfilPage() {
         )}
       </div>
 
+      {/* Recent transactions (premium only) */}
+      {isPremium && ledger.length > 0 && (
+        <div className="card mb-6">
+          <h2 className="font-bold text-lg text-purple-700 mb-4">Ultimas transacciones</h2>
+          <div className="space-y-2">
+            {ledger.map((entry) => (
+              <div key={entry.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{entry.description || entry.source}</p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(entry.created_at).toLocaleDateString("es-CL", {
+                      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+                    })}
+                  </p>
+                </div>
+                <span className={`text-sm font-bold ${entry.amount > 0 ? "text-green-600" : "text-red-500"}`}>
+                  {entry.amount > 0 ? "+" : ""}{entry.amount}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="card border-red-100">
         <h2 className="font-bold text-lg text-red-600 mb-4">Zona de peligro</h2>
         <p className="text-sm text-gray-500 mb-4">
-          Al eliminar tu cuenta se borrarán permanentemente todos tus cuentos, datos y configuración.
+          Al eliminar tu cuenta se borraran permanentemente todos tus cuentos, datos y configuracion.
         </p>
         <div className="flex gap-3">
           <button onClick={handleDeleteAccount} className="btn-danger" disabled={deleting}>
@@ -90,7 +161,7 @@ export default function PerfilPage() {
             onClick={() => signOut({ callbackUrl: "/" })}
             className="btn-secondary text-sm"
           >
-            Cerrar sesión
+            Cerrar sesion
           </button>
         </div>
       </div>

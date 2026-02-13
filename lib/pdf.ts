@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf';
+import { jsPDF, GState } from 'jspdf';
 import type { Story, Page } from '@/types';
 
 async function fetchImageAsBase64(url: string): Promise<string | null> {
@@ -12,8 +12,27 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
   }
 }
 
-export async function generateStoryPDF(story: Story, pages: Page[]): Promise<Buffer> {
+function addWatermark(doc: jsPDF) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  doc.saveGraphicsState();
+  doc.setGState(new GState({ opacity: 0.08 }));
+  doc.setFontSize(48);
+  doc.setTextColor(120, 80, 160);
+  doc.text('Cuentos IA - Version Gratuita', pageWidth / 2, pageHeight / 2, {
+    align: 'center',
+    angle: 45,
+  });
+  doc.restoreGraphicsState();
+}
+
+export async function generateStoryPDF(
+  story: Story,
+  pages: Page[],
+  options?: { watermark?: boolean }
+): Promise<Buffer> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const showWatermark = options?.watermark ?? false;
 
   // Cover page
   doc.setFillColor(255, 248, 240);
@@ -30,6 +49,10 @@ export async function generateStoryPDF(story: Story, pages: Page[]): Promise<Buf
   doc.setFontSize(12);
   doc.setTextColor(160, 140, 180);
   doc.text('Creado con Cuentos IA', 105, 270, { align: 'center' });
+
+  if (showWatermark) {
+    addWatermark(doc);
+  }
 
   // Story pages
   for (const page of pages) {
@@ -59,6 +82,10 @@ export async function generateStoryPDF(story: Story, pages: Page[]): Promise<Buf
     doc.setFontSize(10);
     doc.setTextColor(180, 170, 200);
     doc.text(`${page.page_number}`, 105, 285, { align: 'center' });
+
+    if (showWatermark) {
+      addWatermark(doc);
+    }
   }
 
   return Buffer.from(doc.output('arraybuffer'));

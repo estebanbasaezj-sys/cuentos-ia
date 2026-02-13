@@ -33,7 +33,8 @@ export async function generateStoryText(params: {
   length: string;
   traits?: { mascota?: string; colorFavorito?: string };
 }): Promise<StoryResult> {
-  const pageCount = params.length === 'corto' ? 4 : 6;
+  const pageCounts: Record<string, number> = { corto: 4, medio: 6, largo: 8 };
+  const pageCount = pageCounts[params.length] || 4;
 
   const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4o-mini',
@@ -48,7 +49,7 @@ export async function generateStoryText(params: {
       },
     ],
     temperature: 0.7,
-    max_tokens: 3000,
+    max_tokens: pageCount > 6 ? 4000 : 3000,
   });
 
   const content = response.choices[0]?.message?.content || '';
