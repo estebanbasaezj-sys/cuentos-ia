@@ -1,7 +1,16 @@
 import { jsPDF } from 'jspdf';
-import fs from 'fs';
-import path from 'path';
 import type { Story, Page } from '@/types';
+
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    return `data:image/png;base64,${buffer.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
 
 export async function generateStoryPDF(story: Story, pages: Page[]): Promise<Buffer> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -28,13 +37,11 @@ export async function generateStoryPDF(story: Story, pages: Page[]): Promise<Buf
     doc.setFillColor(255, 252, 248);
     doc.rect(0, 0, 210, 297, 'F');
 
-    // Try to add image
+    // Fetch image from URL and embed in PDF
     if (page.image_url) {
       try {
-        const imgPath = path.join(process.cwd(), 'public', page.image_url);
-        if (fs.existsSync(imgPath)) {
-          const imgData = fs.readFileSync(imgPath);
-          const base64 = `data:image/png;base64,${imgData.toString('base64')}`;
+        const base64 = await fetchImageAsBase64(page.image_url);
+        if (base64) {
           doc.addImage(base64, 'PNG', 20, 15, 170, 120);
         }
       } catch {

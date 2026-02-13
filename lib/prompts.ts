@@ -44,5 +44,5 @@ export function buildImagePrompt(params: {
   const stylePrompt = params.artStyle || 'watercolor illustration, soft brushstrokes, gentle color washes';
   const colorPrompt = params.colorPalette || 'warm color palette with oranges, yellows, and reds';
 
-  return `Children's book illustration, ${stylePrompt}, ${colorPrompt}, whimsical and friendly atmosphere. Scene: ${params.sceneDescription}. The main character is a child named ${params.childName}, approximately ${params.ageGroup} years old. Style: soft rounded shapes, gentle lighting, safe and cheerful for children, storybook quality illustration. No text or words in the image. 1024x1024.`;
+  return `Children's book illustration. Style: ${stylePrompt}. Colors: ${colorPrompt}. Scene: ${params.sceneDescription}. The story features a child named ${params.childName} (around ${params.ageGroup} years old). IMPORTANT: Follow the scene description exactly - include all animals, objects, and elements described. Safe and cheerful for children. No text or words in the image.`;
 }
