@@ -1,9 +1,14 @@
 import OpenAI from 'openai';
+import Replicate from 'replicate';
 import { buildStoryPrompt, buildImagePrompt } from './prompts';
 import { put } from '@vercel/blob';
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
+
+function getReplicate() {
+  return new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 }
 
 interface StoryPage {
@@ -63,15 +68,19 @@ export async function generatePageImage(params: {
 }): Promise<string> {
   const prompt = buildImagePrompt(params);
 
-  const response = await getOpenAI().images.generate({
-    model: 'dall-e-3',
-    prompt,
-    n: 1,
-    size: '1024x1024',
-    quality: 'standard',
+  const output = await getReplicate().run("black-forest-labs/flux-schnell", {
+    input: {
+      prompt,
+      aspect_ratio: "1:1",
+      num_outputs: 1,
+      output_format: "png",
+      go_fast: true,
+    },
   });
 
-  return response.data?.[0]?.url || '';
+  // output is an array of FileOutput objects
+  const results = output as Array<{ url(): string }>;
+  return results[0]?.url() || '';
 }
 
 // Generate all images in parallel for faster processing
