@@ -71,21 +71,39 @@ export async function generatePageImage(params: {
 }): Promise<string> {
   const prompt = buildImagePrompt(params);
 
-  const output = await getReplicate().run("black-forest-labs/flux-schnell", {
-    input: {
-      prompt,
-      aspect_ratio: "1:1",
-      num_outputs: 1,
-      output_format: "png",
-      go_fast: true,
-    },
-  });
+  // Try Replicate Flux first (much cheaper), fallback to DALL-E
+  if (process.env.REPLICATE_API_TOKEN) {
+    try {
+      const output = await getReplicate().run("black-forest-labs/flux-schnell", {
+        input: {
+          prompt,
+          aspect_ratio: "1:1",
+          num_outputs: 1,
+          output_format: "png",
+          go_fast: true,
+        },
+      });
+      const results = output as string[];
+      const url = results[0] || '';
+      if (url) {
+        console.log(`[Replicate] Page ${params.pageNumber} OK`);
+        return url;
+      }
+    } catch (err) {
+      console.error(`[Replicate] Failed for page ${params.pageNumber}, falling back to DALL-E:`, (err as Error).message);
+    }
+  }
 
-  // With useFileOutput: false, output is an array of URL strings
-  const results = output as string[];
-  const url = results[0] || '';
-  console.log(`[Replicate] Page ${params.pageNumber} image URL: ${url ? url.substring(0, 80) + '...' : 'EMPTY'}`);
-  return url;
+  // Fallback: DALL-E 3
+  console.log(`[DALL-E] Generating page ${params.pageNumber}`);
+  const response = await getOpenAI().images.generate({
+    model: 'dall-e-3',
+    prompt,
+    n: 1,
+    size: '1024x1024',
+    quality: 'standard',
+  });
+  return response.data?.[0]?.url || '';
 }
 
 // Generate all images in parallel for faster processing
