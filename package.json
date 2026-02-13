@@ -12,6 +12,7 @@
     "@heroicons/react": "^2.2.0",
     "@libsql/client": "^0.17.0",
     "@vercel/blob": "^2.2.0",
+    "@vercel/functions": "^3.4.2",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",
     "date-fns": "^4.1.0",

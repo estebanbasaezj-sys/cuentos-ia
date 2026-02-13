@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { v4 as uuid } from 'uuid';
+import { waitUntil } from '@vercel/functions';
 import db, { initializeDb } from '@/lib/db';
 import { authOptions } from '@/lib/auth';
 import { generateStoryText, generateAllImagesParallel, downloadAndSaveImage } from '@/lib/openai';
 import { moderateText } from '@/lib/moderation';
 import { buildImagePrompt } from '@/lib/prompts';
 import type { Story } from '@/types';
+
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -26,14 +29,15 @@ export async function POST(req: Request) {
     // Update to generating
     await db.run('UPDATE stories SET status = ?, generation_progress = 5 WHERE id = ?', 'generating_text', storyId);
 
-    // Fire and forget - async generation runs in background
-    generateStoryAsync(storyId, story).catch(async (err) => {
+    // Use waitUntil to keep the function alive on Vercel after response is sent
+    const generationPromise = generateStoryAsync(storyId, story).catch(async (err) => {
       console.error('Generation failed:', err);
       await db.run(
         'UPDATE stories SET status = ?, error_message = ? WHERE id = ?',
         'failed', err.message || 'Error desconocido durante la generación', storyId
       );
     });
+    waitUntil(generationPromise);
 
     return NextResponse.json({ jobId: storyId }, { status: 202 });
   } catch (error) {

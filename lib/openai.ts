@@ -8,7 +8,10 @@ function getOpenAI() {
 }
 
 function getReplicate() {
-  return new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+  return new Replicate({
+    auth: process.env.REPLICATE_API_TOKEN,
+    useFileOutput: false,
+  });
 }
 
 interface StoryPage {
@@ -78,9 +81,11 @@ export async function generatePageImage(params: {
     },
   });
 
-  // output is an array of FileOutput objects
-  const results = output as Array<{ url(): string }>;
-  return results[0]?.url() || '';
+  // With useFileOutput: false, output is an array of URL strings
+  const results = output as string[];
+  const url = results[0] || '';
+  console.log(`[Replicate] Page ${params.pageNumber} image URL: ${url ? url.substring(0, 80) + '...' : 'EMPTY'}`);
+  return url;
 }
 
 // Generate all images in parallel for faster processing
