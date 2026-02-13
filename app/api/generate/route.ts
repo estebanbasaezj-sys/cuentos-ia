@@ -98,6 +98,8 @@ async function generateStoryAsync(storyId: string, story: Story) {
         localPath = await downloadAndSaveImage(imageResult.url, storyId, page.numero);
       } catch (downloadErr) {
         console.error(`Image download failed for page ${page.numero}:`, downloadErr);
+        // Use the original DALL-E URL as fallback
+        localPath = imageResult.url;
       }
     }
 

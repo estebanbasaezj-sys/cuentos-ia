@@ -1,7 +1,6 @@
 import OpenAI from 'openai';
 import { buildStoryPrompt, buildImagePrompt } from './prompts';
-import fs from 'fs';
-import path from 'path';
+import { put } from '@vercel/blob';
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -102,15 +101,21 @@ export async function downloadAndSaveImage(
   storyId: string,
   pageNumber: number
 ): Promise<string> {
-  const dir = path.join(process.cwd(), 'public', 'uploads', 'stories', storyId);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  // Try to upload to Vercel Blob for persistent storage
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const response = await fetch(url);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const blob = await put(`stories/${storyId}/${pageNumber}.png`, buffer, {
+        access: 'public',
+        contentType: 'image/png',
+      });
+      return blob.url;
+    } catch (err) {
+      console.error('Blob upload failed, using original URL:', err);
+    }
   }
 
-  const filePath = path.join(dir, `${pageNumber}.png`);
-  const response = await fetch(url);
-  const buffer = Buffer.from(await response.arrayBuffer());
-  fs.writeFileSync(filePath, buffer);
-
-  return `/uploads/stories/${storyId}/${pageNumber}.png`;
+  // Fallback: return the original DALL-E URL directly
+  return url;
 }
