@@ -1,6 +1,5 @@
-const CACHE_NAME = 'cuentos-ia-v1';
+const CACHE_NAME = 'sofia-v3';
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -17,7 +16,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: clean ALL old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -29,7 +28,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network first, fallback to cache
+// Fetch: network first for everything except images
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
@@ -38,6 +37,9 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API requests and auth
   if (request.url.includes('/api/')) return;
+
+  // Skip _next JS/CSS chunks — always go to network (essential for dev and updates)
+  if (request.url.includes('/_next/')) return;
 
   // For navigation requests: network first, fallback to cache
   if (request.mode === 'navigate') {
@@ -53,8 +55,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets: cache first, fallback to network
-  if (request.url.match(/\.(png|jpg|jpeg|svg|gif|ico|css|js|woff2?)$/)) {
+  // For images/fonts only: cache first, fallback to network
+  if (request.url.match(/\.(png|jpg|jpeg|svg|gif|ico|woff2?|webp)$/)) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
@@ -67,15 +69,4 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
-
-  // Default: network first
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        return response;
-      })
-      .catch(() => caches.match(request))
-  );
 });

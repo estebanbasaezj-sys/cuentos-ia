@@ -38,7 +38,7 @@ export async function POST(req: Request, { params }: { params: { storyId: string
       return NextResponse.json({ error: 'Página no encontrada' }, { status: 404 });
     }
 
-    // Use art style from story traits
+    // Use art style and character descriptions from story traits
     const traits = story.traits ? JSON.parse(story.traits) : {};
 
     const imageUrl = await generatePageImage({
@@ -48,6 +48,7 @@ export async function POST(req: Request, { params }: { params: { storyId: string
       pageNumber: page.page_number,
       artStyle: traits.artStyle,
       colorPalette: traits.colorPalette,
+      characterDescriptions: traits.characterDescriptions,
     });
 
     const localPath = await downloadAndSaveImage(imageUrl, params.storyId, page.page_number);

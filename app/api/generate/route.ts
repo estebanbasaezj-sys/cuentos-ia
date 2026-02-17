@@ -82,8 +82,20 @@ async function generateStoryAsync(storyId: string, story: Story) {
     );
     if (textDeducted) creditsSpent += CREDIT_COSTS.generateText;
 
-    // Save title
-    await db.run('UPDATE stories SET title = ?, generation_progress = 30 WHERE id = ?', storyContent.titulo, storyId);
+    // Build character descriptions string for consistent characters across pages
+    const characterDescriptions = storyContent.personajes?.length
+      ? storyContent.personajes.map((c) => {
+          const agePrefix = c.edad_estimada ? ` (${c.edad_estimada})` : '';
+          return `${c.nombre}${agePrefix}: ${c.descripcion_visual}`;
+        }).join('. ')
+      : undefined;
+
+    // Save title and character descriptions to traits for later use (e.g., image regeneration)
+    const updatedTraits = { ...traits, characterDescriptions };
+    await db.run(
+      'UPDATE stories SET title = ?, traits = ?, generation_progress = 30 WHERE id = ?',
+      storyContent.titulo, JSON.stringify(updatedTraits), storyId
+    );
 
     // Step 2: Generate images in PARALLEL for speed
     await db.run('UPDATE stories SET status = ?, generation_progress = 40 WHERE id = ?', 'generating_images', storyId);
@@ -93,13 +105,16 @@ async function generateStoryAsync(storyId: string, story: Story) {
     const colorPalette = traits?.colorPalette;
 
     // Prepare all pages for parallel generation
+    const totalPages = storyContent.paginas.length;
     const imageRequests = storyContent.paginas.map((page) => ({
       sceneDescription: page.descripcion_escena,
       childName: story.child_name,
       ageGroup: story.child_age_group,
       pageNumber: page.numero,
+      totalPages,
       artStyle,
       colorPalette,
+      characterDescriptions,
     }));
 
     // Generate ALL images in parallel (much faster!)
@@ -138,8 +153,10 @@ async function generateStoryAsync(storyId: string, story: Story) {
         childName: story.child_name,
         ageGroup: story.child_age_group,
         pageNumber: page.numero,
+        totalPages,
         artStyle,
         colorPalette,
+        characterDescriptions,
       });
 
       await db.run(

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Sparkles, UserPlus, AlertCircle } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function RegisterPage() {
       return;
     }
     if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
+      setError("La contrasena debe tener al menos 6 caracteres");
       return;
     }
 
@@ -43,7 +44,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // Auto login
     const loginRes = await signIn("credentials", {
       email,
       password,
@@ -53,22 +53,25 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (loginRes?.error) {
-      setError("Cuenta creada pero hubo un error al iniciar sesión. Intenta en la página de login.");
+      setError("Cuenta creada pero hubo un error al iniciar sesion. Intenta en la pagina de login.");
     } else {
       router.push("/crear");
     }
   };
 
   return (
-    <div className="card">
+    <div className="card animate-fade-in">
       <div className="text-center mb-6">
-        <div className="text-4xl mb-2">✨</div>
-        <h1 className="text-2xl font-bold text-purple-800">Crear cuenta</h1>
-        <p className="text-gray-500 text-sm mt-1">Empieza a crear cuentos mágicos</p>
+        <div className="icon-container-md mx-auto mb-4">
+          <Sparkles className="w-7 h-7" />
+        </div>
+        <h1 className="text-2xl font-display font-bold text-gradient">Crear cuenta</h1>
+        <p className="text-gray-500 text-sm mt-1">Empieza a crear cuentos magicos</p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">
+        <div className="flex items-center gap-2 bg-red-50/80 border border-red-200/60 text-red-700 rounded-2xl px-4 py-3 mb-4 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {error}
         </div>
       )}
@@ -81,13 +84,13 @@ export default function RegisterPage() {
             className="input-field"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ej: María"
+            placeholder="Ej: Maria"
             required
             maxLength={50}
           />
         </div>
         <div>
-          <label className="label-field">Correo electrónico</label>
+          <label className="label-field">Correo electronico</label>
           <input
             type="email"
             className="input-field"
@@ -98,13 +101,13 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label className="label-field">Contraseña</label>
+          <label className="label-field">Contrasena</label>
           <input
             type="password"
             className="input-field"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Minimo 6 caracteres"
             required
             minLength={6}
           />
@@ -112,23 +115,28 @@ export default function RegisterPage() {
         <label className="flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
-            className="mt-1 w-4 h-4 accent-purple-600"
+            className="mt-1 w-4 h-4 accent-brand-600 rounded"
             checked={isAdult}
             onChange={(e) => setIsAdult(e.target.checked)}
           />
-          <span className="text-sm text-gray-600">
-            Confirmo que soy mayor de 18 años y acepto los términos de uso del servicio.
+          <span className="text-sm text-gray-500 leading-relaxed">
+            Confirmo que soy mayor de 18 anos y acepto los terminos de uso del servicio.
           </span>
         </label>
-        <button type="submit" className="btn-primary w-full" disabled={loading || !isAdult}>
+        <button
+          type="submit"
+          className="btn-primary w-full flex items-center justify-center gap-2"
+          disabled={loading || !isAdult}
+        >
+          <UserPlus className="w-4 h-4" />
           {loading ? "Creando cuenta..." : "Crear cuenta gratis"}
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-4">
-        ¿Ya tienes cuenta?{" "}
-        <Link href="/login" className="text-purple-600 font-semibold hover:underline">
-          Inicia sesión
+      <p className="text-center text-sm text-gray-500 mt-5">
+        Ya tienes cuenta?{" "}
+        <Link href="/login" className="text-brand-600 font-heading font-bold hover:text-brand-800 transition-colors">
+          Inicia sesion
         </Link>
       </p>
     </div>

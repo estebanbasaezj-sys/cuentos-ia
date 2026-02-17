@@ -9,20 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0",
     "@libsql/client": "^0.17.0",
     "@vercel/blob": "^2.2.0",
     "@vercel/functions": "^3.4.2",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.34.0",
     "jspdf": "^4.1.0",
+    "lucide-react": "^0.564.0",
     "nanoid": "^5.1.6",
     "next": "14.2.35",
     "next-auth": "^4.24.13",
     "openai": "^6.17.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-pageflip": "^2.0.3",
     "replicate": "^1.4.0",
     "uuid": "^13.0.0",
     "zod": "^4.3.6"

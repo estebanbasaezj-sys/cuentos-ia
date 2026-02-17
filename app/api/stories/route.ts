@@ -71,11 +71,13 @@ export async function POST(req: Request) {
 
     const storyId = uuid();
 
-    // Build traits JSON including artStyle and colorPalette
+    // Build traits JSON including artStyle, colorPalette, author, dedication
     const traits = {
       ...(parsed.data.traits || {}),
       artStyle: parsed.data.artStyle || body.traits?.artStyle,
       colorPalette: parsed.data.colorPalette || body.traits?.colorPalette,
+      ...(parsed.data.authorName && { authorName: parsed.data.authorName }),
+      ...(parsed.data.dedication && { dedication: parsed.data.dedication }),
     };
 
     await db.run(

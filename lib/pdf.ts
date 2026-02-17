@@ -19,7 +19,7 @@ function addWatermark(doc: jsPDF) {
   doc.setGState(new GState({ opacity: 0.08 }));
   doc.setFontSize(48);
   doc.setTextColor(120, 80, 160);
-  doc.text('Cuentos IA - Version Gratuita', pageWidth / 2, pageHeight / 2, {
+  doc.text('Sofia - Version Gratuita', pageWidth / 2, pageHeight / 2, {
     align: 'center',
     angle: 45,
   });
@@ -48,7 +48,7 @@ export async function generateStoryPDF(
 
   doc.setFontSize(12);
   doc.setTextColor(160, 140, 180);
-  doc.text('Creado con Cuentos IA', 105, 270, { align: 'center' });
+  doc.text('Creado con Sofia', 105, 270, { align: 'center' });
 
   if (showWatermark) {
     addWatermark(doc);

@@ -6,6 +6,11 @@
 export type PlanType = 'free' | 'premium';
 export type ImageQuality = 'standard' | 'high';
 
+// --- Admin: sin limites ---
+export const ADMIN_EMAILS = [
+  'esteban.basaez.j@gmail.com',
+];
+
 // --- Plan Free: limites ---
 export const FREE_LIMITS = {
   storiesPerWeek: 1,
@@ -27,6 +32,12 @@ export const PREMIUM_FEATURES = {
   maxLibraryStories: Infinity,
 };
 
+// --- Plan Premium: rate limits (red de seguridad) ---
+export const PREMIUM_LIMITS = {
+  storiesPerDay: 3,
+  storiesPerMonth: 15,
+};
+
 // --- Costos en creditos ---
 export const CREDIT_COSTS = {
   generateText: 5,
@@ -34,6 +45,7 @@ export const CREDIT_COSTS = {
   generateImageHigh: 12,
   exportPdfClean: 3,
   proCover: 10,
+  narratePerPage: 3,
 };
 
 // --- Packs de top-up ---
@@ -78,4 +90,12 @@ export function getImageCost(quality: ImageQuality): number {
   return quality === 'high'
     ? CREDIT_COSTS.generateImageHigh
     : CREDIT_COSTS.generateImageStandard;
+}
+
+export function isAdminEmail(email: string): boolean {
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
+export function estimateNarrationCost(pageCount: number): number {
+  return pageCount * CREDIT_COSTS.narratePerPage;
 }

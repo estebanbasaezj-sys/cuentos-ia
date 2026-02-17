@@ -1,14 +1,23 @@
 import db from './db';
 import { getOrCreateWallet, canAfford } from './wallet';
-import { FREE_LIMITS, estimateStoryCost, isStylePremium, isLengthPremium, CREDIT_COSTS } from './monetization';
+import { FREE_LIMITS, PREMIUM_LIMITS, estimateStoryCost, isStylePremium, isLengthPremium, CREDIT_COSTS, isAdminEmail, estimateNarrationCost } from './monetization';
 import type { GateResult } from '@/types';
 import type { ImageQuality } from './monetization';
+
+async function isAdminUser(userId: string): Promise<boolean> {
+  const user = await db.get<{ email: string }>('SELECT email FROM users WHERE id = ?', userId);
+  return !!user && isAdminEmail(user.email);
+}
 
 export async function canGenerateStory(
   userId: string,
   length: string,
   artStyle: string
 ): Promise<GateResult> {
+  if (await isAdminUser(userId)) {
+    return { allowed: true };
+  }
+
   const wallet = await getOrCreateWallet(userId);
 
   if (wallet.plan_type === 'free') {
@@ -28,6 +37,16 @@ export async function canGenerateStory(
     return { allowed: true };
   }
 
+  // Premium: chequear rate limits (red de seguridad)
+  const dayCount = await countStoriesThisDay(userId);
+  if (dayCount >= PREMIUM_LIMITS.storiesPerDay) {
+    return { allowed: false, reason: 'daily_limit', paywallType: 'info' };
+  }
+  const monthCount = await countStoriesThisMonth(userId);
+  if (monthCount >= PREMIUM_LIMITS.storiesPerMonth) {
+    return { allowed: false, reason: 'monthly_limit', paywallType: 'info' };
+  }
+
   // Premium: chequear creditos
   const imageQuality: ImageQuality = 'high';
   const cost = estimateStoryCost(length, imageQuality);
@@ -39,6 +58,7 @@ export async function canGenerateStory(
 }
 
 export async function canExportCleanPdf(userId: string): Promise<GateResult> {
+  if (await isAdminUser(userId)) return { allowed: true };
   const wallet = await getOrCreateWallet(userId);
   if (wallet.plan_type === 'free') {
     return { allowed: false, reason: 'premium_feature', paywallType: 'upgrade' };
@@ -50,6 +70,7 @@ export async function canExportCleanPdf(userId: string): Promise<GateResult> {
 }
 
 export async function canSaveToLibrary(userId: string): Promise<GateResult> {
+  if (await isAdminUser(userId)) return { allowed: true };
   const wallet = await getOrCreateWallet(userId);
   if (wallet.plan_type === 'free') {
     const count = await db.get<{ cnt: number }>(
@@ -63,6 +84,7 @@ export async function canSaveToLibrary(userId: string): Promise<GateResult> {
 }
 
 export async function canRegenerateImage(userId: string): Promise<GateResult> {
+  if (await isAdminUser(userId)) return { allowed: true };
   const wallet = await getOrCreateWallet(userId);
   if (wallet.plan_type === 'free') {
     return { allowed: true }; // Free users can regen (no credit cost)
@@ -74,12 +96,33 @@ export async function canRegenerateImage(userId: string): Promise<GateResult> {
   return { allowed: true };
 }
 
+export async function countStoriesThisDay(userId: string): Promise<number> {
+  const result = await db.get<{ cnt: number }>(
+    "SELECT COUNT(*) as cnt FROM stories WHERE user_id = ? AND created_at >= datetime('now', 'start of day')",
+    userId
+  );
+  return result?.cnt || 0;
+}
+
 async function countStoriesThisWeek(userId: string): Promise<number> {
   const result = await db.get<{ cnt: number }>(
     "SELECT COUNT(*) as cnt FROM stories WHERE user_id = ? AND created_at >= datetime('now', '-7 days')",
     userId
   );
   return result?.cnt || 0;
+}
+
+export async function canNarrateStory(userId: string, pageCount: number): Promise<GateResult> {
+  if (await isAdminUser(userId)) return { allowed: true };
+  const wallet = await getOrCreateWallet(userId);
+  if (wallet.plan_type === 'free') {
+    return { allowed: false, reason: 'premium_narration', paywallType: 'upgrade' };
+  }
+  const cost = estimateNarrationCost(pageCount);
+  if (!canAfford(wallet, cost)) {
+    return { allowed: false, reason: 'insufficient_credits', paywallType: 'topup' };
+  }
+  return { allowed: true };
 }
 
 export async function countStoriesThisMonth(userId: string): Promise<number> {

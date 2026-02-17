@@ -144,6 +144,15 @@ export async function initializeDb() {
         created_at TEXT DEFAULT (datetime('now'))
     )`,
     'CREATE INDEX IF NOT EXISTS idx_telemetry_type ON telemetry_events(event_type)',
+    `CREATE TABLE IF NOT EXISTS password_resets (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        expires_at TEXT NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    'CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token)',
   ];
 
   for (const stmt of statements) {
@@ -154,6 +163,8 @@ export async function initializeDb() {
   const migrations = [
     "ALTER TABLE stories ADD COLUMN credit_cost INTEGER DEFAULT 0",
     "ALTER TABLE stories ADD COLUMN image_quality TEXT DEFAULT 'standard'",
+    "ALTER TABLE pages ADD COLUMN audio_url TEXT DEFAULT NULL",
+    "ALTER TABLE stories ADD COLUMN narration_voice TEXT DEFAULT NULL",
   ];
   for (const stmt of migrations) {
     try { await db.execute(stmt); } catch { /* columna ya existe */ }

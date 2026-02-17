@@ -1,7 +1,7 @@
 import db from './db';
 import { v4 as uuid } from 'uuid';
 import type { Wallet } from '@/types';
-import { PREMIUM_FEATURES } from './monetization';
+import { PREMIUM_FEATURES, isAdminEmail } from './monetization';
 
 export async function getOrCreateWallet(userId: string): Promise<Wallet> {
   let wallet = await db.get<Wallet>('SELECT * FROM wallets WHERE user_id = ?', userId);
@@ -35,6 +35,10 @@ export async function deductCredits(
 ): Promise<boolean> {
   const wallet = await getOrCreateWallet(userId);
   if (wallet.plan_type === 'free') return true;
+
+  // Admin users: no deduction
+  const user = await db.get<{ email: string }>('SELECT email FROM users WHERE id = ?', userId);
+  if (user && isAdminEmail(user.email)) return true;
 
   const total = totalCredits(wallet);
   if (total < amount) return false;

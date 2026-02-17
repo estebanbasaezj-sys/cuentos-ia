@@ -6,25 +6,914 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(180, 83, 9, 0.15);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(180, 83, 9, 0.3);
+  }
 }
 
 @layer components {
+  /* ── Buttons ─────────────────────────────────── */
   .btn-primary {
-    @apply bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply relative font-heading font-bold py-2.5 px-6 rounded-2xl text-white
+           transition-all duration-300 active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none;
+    background: linear-gradient(135deg, #9333ea, #7e22ce, #6b21a8);
+    box-shadow: 0 4px 14px rgba(147, 51, 234, 0.20);
   }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(147, 51, 234, 0.35);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.95) translateY(0);
+  }
+
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-purple-700 font-semibold py-2.5 px-6 rounded-xl border-2 border-purple-200 transition-all duration-200 hover:border-purple-400 active:scale-95;
+    @apply font-heading font-bold py-2.5 px-6 rounded-2xl
+           border border-white/60 text-brand-700
+           transition-all duration-300 active:scale-95;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
   }
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(147, 51, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.1);
+  }
+
   .btn-danger {
-    @apply bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 active:scale-95;
+    @apply font-heading font-bold py-2 px-4 rounded-2xl text-white
+           transition-all duration-300 active:scale-95;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
   }
+  .btn-danger:hover {
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* ── Cards ───────────────────────────────────── */
   .card {
-    @apply bg-white rounded-2xl shadow-md border border-orange-100 p-6;
+    @apply rounded-3xl p-6 border border-white/60;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.06);
   }
+
+  .card-hover {
+    @apply card transition-all duration-300 cursor-pointer;
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 28px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-premium {
+    @apply rounded-3xl p-6 relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.06), rgba(147, 51, 234, 0.04));
+    border: 1px solid rgba(251, 191, 36, 0.20);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(180, 83, 9, 0.06);
+  }
+
+  /* ── Inputs ──────────────────────────────────── */
   .input-field {
-    @apply w-full px-4 py-2.5 rounded-xl border-2 border-orange-200 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-100 transition-colors bg-white;
+    @apply w-full px-4 py-2.5 rounded-2xl border border-white/60
+           focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400
+           transition-all duration-200 font-body;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
   }
+
   .label-field {
-    @apply block text-sm font-semibold text-gray-700 mb-1.5;
+    @apply block text-sm font-bold text-brand-800 mb-1.5 font-heading;
+  }
+
+  /* ── Badges ──────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-heading;
+  }
+  .badge-success {
+    @apply badge bg-emerald-100 text-emerald-700;
+  }
+  .badge-warning {
+    @apply badge bg-amber-100 text-amber-700;
+  }
+  .badge-danger {
+    @apply badge bg-red-100 text-red-700;
+  }
+  .badge-info {
+    @apply badge bg-sky-100 text-sky-700;
+  }
+  .badge-premium {
+    @apply badge text-amber-800;
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  }
+
+  /* ── Chips (radio-button style selectors) ──── */
+  .chip {
+    @apply relative px-4 py-2.5 rounded-2xl text-sm font-bold font-heading
+           transition-all duration-200 cursor-pointer select-none text-center;
+  }
+  .chip-default {
+    @apply chip text-gray-600 border border-gray-200;
+    background: rgba(255, 255, 255, 0.6);
+  }
+  .chip-default:hover {
+    border-color: rgba(147, 51, 234, 0.3);
+    background: rgba(255, 255, 255, 0.8);
+  }
+  .chip-selected {
+    @apply chip text-white border-transparent;
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+    animation: scale-pop 0.25s ease-out;
+  }
+  .chip-locked {
+    @apply chip text-gray-400 border border-gray-200 cursor-not-allowed opacity-60;
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  /* ── Skeleton loading ────────────────────────── */
+  .skeleton {
+    @apply rounded-2xl;
+    background: linear-gradient(90deg, #FAF0E4 25%, #F5E6D3 50%, #FAF0E4 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* ── Decorative backgrounds ──────────────────── */
+  .bg-mesh {
+    background:
+      radial-gradient(at 20% 20%, rgba(147, 51, 234, 0.03) 0px, transparent 50%),
+      radial-gradient(at 80% 20%, rgba(45, 212, 191, 0.04) 0px, transparent 50%),
+      radial-gradient(at 50% 80%, rgba(251, 113, 133, 0.03) 0px, transparent 50%),
+      radial-gradient(at 80% 80%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
+  }
+
+  /* ── Text gradient ───────────────────────────── */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #7e22ce, #9333ea, #B45309);
+  }
+
+  .text-gradient-vivid {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #a855f7, #9333ea, #FBBF24);
+  }
+
+  /* ── Glass overlay ───────────────────────────── */
+  .glass {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  /* ── Icon containers ─────────────────────────── */
+  .icon-container {
+    @apply inline-flex items-center justify-center rounded-2xl;
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
+    box-shadow: 0 4px 14px rgba(147, 51, 234, 0.3);
+    animation: icon-glow 3s ease-in-out infinite;
+  }
+  .icon-container-sm {
+    @apply icon-container w-10 h-10 text-white;
+  }
+  .icon-container-md {
+    @apply icon-container w-14 h-14 text-white;
+  }
+  .icon-container-lg {
+    @apply icon-container w-20 h-20 text-white;
+  }
+
+  /* ── Gradient border effect ──────────────────── */
+  .gradient-border {
+    @apply relative rounded-3xl;
+  }
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #9333ea, #2dd4bf, #fb7185, #9333ea);
+    background-size: 300% 300%;
+    animation: gradient 6s ease infinite;
+    z-index: -1;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    padding: 2px;
+  }
+
+  /* ══════════════════════════════════════════════
+     STORYBOOK — Professional children's book
+     ══════════════════════════════════════════════ */
+  .story-book-wrapper {
+    perspective: 2000px;
+  }
+
+  .story-book {
+    box-shadow:
+      0 15px 50px rgba(0, 0, 0, 0.2),
+      0 5px 15px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+
+  .book-page {
+    background: #FFFDF7;
+    overflow: hidden;
+  }
+
+  /* ══════════════════════════════════════════════
+     FRONT COVER — spectacular children's book
+     ══════════════════════════════════════════════ */
+  .book-cover {
+    background: #1a0a2e;
+  }
+
+  /* Subtle gradient at bottom so title plate blends with illustration */
+  .cover-bottom-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 55%;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(15, 5, 30, 0.15) 40%,
+      rgba(15, 5, 30, 0.6) 70%,
+      rgba(15, 5, 30, 0.85) 100%
+    );
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* Gold ornamental double-frame */
+  .cover-frame {
+    position: absolute;
+    inset: 6px;
+    border: 2px solid rgba(212, 175, 55, 0.6);
+    border-radius: 2px;
+    z-index: 16;
+    pointer-events: none;
+  }
+  .cover-frame::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 1px;
+  }
+
+  /* Gold corner ornaments */
+  .cover-corner {
+    position: absolute;
+    font-size: 16px;
+    color: rgba(212, 175, 55, 0.7);
+    line-height: 1;
+    z-index: 17;
+  }
+  .cover-corner-tl { top: -3px; left: -1px; }
+  .cover-corner-tr { top: -3px; right: -1px; }
+  .cover-corner-bl { bottom: -3px; left: -1px; }
+  .cover-corner-br { bottom: -3px; right: -1px; }
+
+  /* Title plate — elegant floating card at the bottom */
+  .cover-title-plate {
+    position: absolute;
+    bottom: 28px;
+    left: 14px;
+    right: 14px;
+    z-index: 20;
+    background: linear-gradient(
+      135deg,
+      rgba(30, 10, 60, 0.92) 0%,
+      rgba(50, 20, 80, 0.90) 50%,
+      rgba(30, 10, 60, 0.92) 100%
+    );
+    border: 1.5px solid rgba(212, 175, 55, 0.45);
+    border-radius: 8px;
+    padding: 10px 14px 8px;
+    text-align: center;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Decorative ornament above title */
+  .cover-plate-ornament {
+    font-size: 8px;
+    color: rgba(212, 175, 55, 0.5);
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+
+  /* Title — gold shimmer gradient text */
+  .cover-title {
+    font-family: var(--font-heading, inherit);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.25;
+    background: linear-gradient(
+      135deg,
+      #f5e6a3 0%,
+      #d4af37 25%,
+      #f7e8a0 50%,
+      #d4af37 75%,
+      #f5e6a3 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  }
+
+  @media (min-width: 640px) {
+    .cover-title {
+      font-size: 20px;
+    }
+  }
+
+  /* Divider between title and author */
+  .cover-plate-divider {
+    width: 40px;
+    height: 1px;
+    margin: 5px auto;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(212, 175, 55, 0.5),
+      transparent
+    );
+  }
+
+  /* Author name */
+  .cover-author {
+    font-family: var(--font-heading, inherit);
+    font-size: 9px;
+    color: rgba(212, 175, 55, 0.7);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  @media (min-width: 640px) {
+    .cover-author {
+      font-size: 10px;
+    }
+  }
+
+  /* Dedication — subtle text at very bottom */
+  .cover-dedication {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    white-space: nowrap;
+    max-width: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+
+  /* ══════════════════════════════════════════════
+     ENDPAPER — decorative guard page (like real books)
+     ══════════════════════════════════════════════ */
+  .book-endpaper {
+    background: #f5ece0;
+  }
+
+  .endpaper-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Repeating decorative pattern — stars and dots like children's book endpapers */
+  .endpaper-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle, rgba(180, 83, 9, 0.07) 1.5px, transparent 1.5px),
+      radial-gradient(circle, rgba(147, 51, 234, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px, 12px 12px;
+    background-position: 0 0, 6px 6px;
+  }
+
+  .endpaper-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 24px;
+    gap: 16px;
+  }
+
+  .endpaper-ornament {
+    font-size: 18px;
+    color: rgba(180, 83, 9, 0.22);
+    line-height: 1;
+  }
+
+  .endpaper-dedication {
+    font-family: var(--font-heading, inherit);
+    font-style: italic;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(107, 33, 168, 0.40);
+    max-width: 80%;
+  }
+  @media (min-width: 640px) {
+    .endpaper-dedication {
+      font-size: 13px;
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+     BACK COVER — rich purple with image ghost
+     ══════════════════════════════════════════════ */
+  .book-back-cover {
+    background: #1a0a2e;
+  }
+
+  .back-cover-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba(76, 29, 149, 0.92) 0%,
+      rgba(49, 10, 101, 0.95) 50%,
+      rgba(30, 10, 60, 0.92) 100%
+    );
+  }
+
+  .back-cover-frame {
+    border-color: rgba(168, 85, 247, 0.25) !important;
+  }
+  .back-cover-frame::before {
+    border-color: rgba(168, 85, 247, 0.12) !important;
+  }
+  .back-cover-frame .cover-corner {
+    color: rgba(168, 85, 247, 0.35);
+  }
+
+  .back-cover-ornament {
+    font-size: 24px;
+    color: rgba(212, 175, 55, 0.35);
+    margin-bottom: 10px;
+    line-height: 1;
+  }
+
+  .back-cover-divider {
+    width: 50px;
+    height: 1px;
+    margin: 8px auto;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(212, 175, 55, 0.35),
+      transparent
+    );
+  }
+
+  /* ══════════════════════════════════════════════
+     CONTENT PAGES
+     ══════════════════════════════════════════════ */
+  .book-content-page {
+    border-right: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: inset -2px 0 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .book-content-page::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.03), transparent);
+    pointer-events: none;
+  }
+
+  .content-page-inner {
+    background: #FFFDF7;
+  }
+
+  .content-page-image {
+    border-bottom: 1px solid rgba(180, 83, 9, 0.06);
+  }
+
+  .content-page-text {
+    padding: 10px 16px 6px;
+  }
+
+  @media (min-width: 640px) {
+    .content-page-text {
+      padding: 14px 20px 8px;
+    }
+  }
+
+  .content-page-number {
+    font-size: 9px;
+    color: rgba(180, 83, 9, 0.30);
+    font-family: var(--font-heading, inherit);
+    letter-spacing: 0.05em;
+  }
+
+  .stf__parent {
+    margin: 0 auto;
+    /* Background simulates the book cover back / endpaper when cover is shown alone */
+    background:
+      linear-gradient(to right, #e8ddd0 0%, #f0e6d8 40%, #f5ece0 100%);
+    border-radius: 4px;
+    box-shadow:
+      0 2px 12px rgba(0, 0, 0, 0.08),
+      0 0 1px rgba(0, 0, 0, 0.1);
+  }
+
+  .story-book-wrapper {
+    margin: 0 auto;
+  }
+
+  /* ══════════════════════════════════════════════
+     SOFIA LOGO
+     ══════════════════════════════════════════════ */
+  .sofia-logo-icon {
+    @apply flex-shrink-0;
+    filter: drop-shadow(0 2px 4px rgba(147, 51, 234, 0.2));
+    animation: icon-sparkle 4s ease-in-out infinite;
+  }
+
+  .sofia-logo-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #9333ea 0%, #7e22ce 40%, #a855f7 100%);
+  }
+
+  .sofia-logo-i {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #e879f9, #c084fc);
+  }
+
+  /* ══════════════════════════════════════════════
+     WIZARD — Multi-step creation flow
+     ══════════════════════════════════════════════ */
+
+  /* Compact header card with title + step bar */
+  .wizard-header-card {
+    @apply rounded-2xl px-4 py-3;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  /* Step pills — horizontal segmented bar */
+  .wizard-pill {
+    @apply flex-1 flex items-center justify-center gap-1 py-2 rounded-xl
+           text-xs font-heading font-bold transition-all duration-300 cursor-pointer;
+  }
+  .wizard-pill-active {
+    @apply text-white;
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+  }
+  .wizard-pill-done {
+    @apply text-emerald-600;
+    background: rgba(16, 185, 129, 0.1);
+  }
+  .wizard-pill-pending {
+    @apply text-gray-400;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  /* Progress bar in wizard header */
+  .wizard-progress-track {
+    @apply w-full h-1 rounded-full overflow-hidden;
+    background: rgba(0, 0, 0, 0.04);
+  }
+  .wizard-progress-bar {
+    @apply h-full rounded-full;
+    background: linear-gradient(90deg, #9333ea, #B45309);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .wizard-card {
+    @apply !p-5 sm:!p-6;
+    will-change: transform, opacity;
+  }
+
+  /* Wizard step direction animations */
+  .wizard-card-forward {
+    animation: slide-in-right 0.3s ease-out both;
+  }
+  .wizard-card-back {
+    animation: slide-in-left 0.3s ease-out both;
+  }
+
+  .wizard-section-label {
+    @apply text-xs font-heading font-bold text-brand-800 mb-2 block;
+  }
+
+  /* ── Floating label inputs ─────────────────── */
+  .floating-field {
+    @apply relative;
+  }
+
+  .floating-input {
+    @apply w-full px-4 pt-5 pb-2 rounded-2xl border border-white/60
+           focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400
+           transition-all duration-200 font-body text-sm;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+  }
+
+  .floating-label {
+    @apply absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400
+           font-heading font-bold pointer-events-none
+           transition-all duration-200 origin-left;
+  }
+
+  /* When input has value or is focused → float up */
+  .floating-input:focus + .floating-label,
+  .floating-input:not(:placeholder-shown) + .floating-label {
+    @apply text-xs text-brand-600;
+    top: 12px;
+    transform: translateY(0) scale(0.85);
+  }
+
+  /* ── Wizard option cards (age groups) ──────── */
+  .wizard-option-card {
+    @apply flex items-center justify-center px-3 py-2.5 rounded-2xl
+           border border-gray-200 text-gray-600
+           transition-all duration-200 cursor-pointer text-center;
+    background: rgba(255, 255, 255, 0.6);
+  }
+  .wizard-option-card:hover {
+    border-color: rgba(147, 51, 234, 0.3);
+    background: rgba(255, 255, 255, 0.85);
+  }
+  .wizard-option-selected {
+    @apply !border-brand-400 !text-brand-700;
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.08), rgba(147, 51, 234, 0.04)) !important;
+    box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.2), 0 2px 8px rgba(147, 51, 234, 0.1);
+    animation: scale-pop 0.25s ease-out;
+  }
+
+  /* ── Wizard theme cards ────────────────────── */
+  .wizard-theme-card {
+    @apply flex flex-col items-center justify-center gap-1 px-2 py-2.5 rounded-2xl
+           border border-gray-200 text-gray-500
+           transition-all duration-200 cursor-pointer text-center;
+    background: rgba(255, 255, 255, 0.6);
+  }
+  .wizard-theme-card:hover {
+    border-color: rgba(147, 51, 234, 0.3);
+    background: rgba(255, 255, 255, 0.85);
+    transform: translateY(-1px);
+  }
+  .wizard-theme-selected {
+    @apply !border-brand-400 !text-brand-700;
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.08), rgba(147, 51, 234, 0.04)) !important;
+    box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.2), 0 2px 8px rgba(147, 51, 234, 0.1);
+    animation: scale-pop 0.25s ease-out;
+  }
+  .wizard-theme-selected .wizard-theme-icon-bg {
+    @apply !text-brand-600;
+  }
+
+  /* Theme icon circular bg */
+  .wizard-theme-icon-bg {
+    @apply w-9 h-9 rounded-full flex items-center justify-center
+           transition-all duration-200;
+  }
+
+  .wizard-theme-card:hover .wizard-theme-icon-bg {
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.3);
+    transform: scale(1.08);
+  }
+
+  /* ══════════════════════════════════════════════
+     PAGE IMAGE PLACEHOLDER — warm gradient
+     ══════════════════════════════════════════════ */
+  .page-image-placeholder {
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(147, 51, 234, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 60%, rgba(251, 191, 36, 0.08) 0%, transparent 50%),
+      linear-gradient(170deg, #FAF0E4 0%, #FEF3C7 40%, #F5E6D3 70%, #FAF0E4 100%);
+  }
+
+  .page-image-placeholder-icon {
+    opacity: 0.10;
+    color: #9333ea;
+  }
+
+  .page-placeholder-pattern {
+    width: 100%;
+    height: 100%;
+    background-image:
+      radial-gradient(circle at 50% 50%, rgba(180, 83, 9, 0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .page-placeholder-icon-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .page-placeholder-star {
+    position: absolute;
+    font-size: 14px;
+    color: rgba(212, 175, 55, 0.20);
+    animation: star-twinkle 3s ease-in-out infinite;
+  }
+  .page-placeholder-star:nth-child(2) { animation-delay: 0.7s; }
+  .page-placeholder-star:nth-child(3) { animation-delay: 1.4s; }
+  .page-placeholder-star:nth-child(4) { animation-delay: 2.1s; }
+
+  /* ══════════════════════════════════════════════
+     MOBILE BOTTOM NAVIGATION — Material Design
+     ══════════════════════════════════════════════ */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .bottom-nav-inner {
+    @apply flex items-center justify-around px-2;
+    height: 56px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center gap-0.5
+           min-w-[64px] min-h-[48px] rounded-2xl
+           transition-all duration-200 active:scale-90;
+    color: rgba(107, 114, 128, 0.8);
+  }
+
+  .bottom-nav-item-active {
+    color: #7e22ce;
+  }
+
+  .bottom-nav-label {
+    @apply text-[10px] font-heading font-bold leading-none;
+  }
+
+  /* Center FAB button */
+  .bottom-nav-fab {
+    @apply flex items-center justify-center w-14 h-14 rounded-full text-white
+           -mt-5 transition-all duration-300 active:scale-90;
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
+    box-shadow: 0 4px 16px rgba(147, 51, 234, 0.35);
+  }
+
+  .bottom-nav-fab-active {
+    box-shadow: 0 4px 20px rgba(147, 51, 234, 0.5), 0 0 0 3px rgba(147, 51, 234, 0.15);
+  }
+
+  .bottom-nav-item-active .bottom-nav-label {
+    @apply font-extrabold;
+  }
+
+  /* ══════════════════════════════════════════════
+     MOBILE-FIRST IMPROVEMENTS
+     ══════════════════════════════════════════════ */
+
+  /* Card active state for mobile tap feedback */
+  .card-hover:active {
+    transform: scale(0.98);
+    transition-duration: 100ms;
+  }
+
+  /* Wizard option cards — bigger touch targets on mobile */
+  @media (max-width: 639px) {
+    .wizard-option-card {
+      min-height: 48px;
+    }
+
+    .wizard-theme-card {
+      min-height: 72px;
+      padding: 10px 8px;
+    }
+
+    .wizard-pill {
+      min-height: 40px;
+      font-size: 11px;
+    }
+
+    .chip {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .floating-input {
+      font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+     MICRO-INTERACTIONS
+     ══════════════════════════════════════════════ */
+
+  /* Button press feedback — scale + shadow reduction */
+  .btn-primary:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 6px rgba(147, 51, 234, 0.15);
+    transition-duration: 100ms;
+  }
+  .btn-secondary:active {
+    transform: scale(0.96);
+    transition-duration: 100ms;
+  }
+
+  /* Bottom nav FAB press — glow + scale */
+  .bottom-nav-fab:active {
+    transform: scale(0.88) translateY(0);
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.5);
+  }
+
+  /* Card hover lift — smooth on desktop */
+  @media (hover: hover) {
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  /* Smooth page transitions for wizard steps */
+  @keyframes slide-in-right {
+    0% { opacity: 0; transform: translateX(24px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slide-in-left {
+    0% { opacity: 0; transform: translateX(-24px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes scale-pop {
+    0% { transform: scale(0.92); opacity: 0.8; }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Scrollbar hide helper for horizontal scroll areas */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth focus ring for accessibility */
+  .focus-ring:focus-visible {
+    outline: 2px solid #9333ea;
+    outline-offset: 2px;
+    border-radius: 12px;
+  }
+
+  /* Link hover underline animation */
+  .link-animated {
+    @apply relative;
+  }
+  .link-animated::after {
+    content: "";
+    @apply absolute bottom-0 left-0 w-0 h-[2px] rounded-full transition-all duration-300;
+    background: linear-gradient(90deg, #9333ea, #B45309);
+  }
+  .link-animated:hover::after {
+    @apply w-full;
   }
 }

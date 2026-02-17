@@ -2,6 +2,8 @@ import OpenAI from 'openai';
 import Replicate from 'replicate';
 import { buildStoryPrompt, buildImagePrompt } from './prompts';
 import { put } from '@vercel/blob';
+import fs from 'fs/promises';
+import path from 'path';
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -20,8 +22,16 @@ interface StoryPage {
   descripcion_escena: string;
 }
 
+interface StoryCharacter {
+  nombre: string;
+  descripcion_visual: string;
+  edad_estimada?: string;
+  genero?: string;
+}
+
 interface StoryResult {
   titulo: string;
+  personajes?: StoryCharacter[];
   paginas: StoryPage[];
 }
 
@@ -67,8 +77,10 @@ export async function generatePageImage(params: {
   childName: string;
   ageGroup: string;
   pageNumber: number;
+  totalPages?: number;
   artStyle?: string;
   colorPalette?: string;
+  characterDescriptions?: string;
 }): Promise<string> {
   const prompt = buildImagePrompt(params);
 
@@ -80,7 +92,8 @@ export async function generatePageImage(params: {
           prompt,
           aspect_ratio: "1:1",
           num_outputs: 1,
-          output_format: "png",
+          output_format: "webp",
+          output_quality: 80,
           go_fast: true,
         },
       });
@@ -113,8 +126,10 @@ export async function generateAllImagesParallel(pages: Array<{
   childName: string;
   ageGroup: string;
   pageNumber: number;
+  totalPages?: number;
   artStyle?: string;
   colorPalette?: string;
+  characterDescriptions?: string;
 }>): Promise<Array<{ pageNumber: number; url: string | null; error?: string }>> {
   const promises = pages.map(async (page) => {
     try {
@@ -145,10 +160,96 @@ export async function downloadAndSaveImage(
       });
       return blob.url;
     } catch (err) {
-      console.error('Blob upload failed, using original URL:', err);
+      console.error('Blob upload failed:', err);
     }
   }
 
-  // Fallback: return the original DALL-E URL directly
-  return url;
+  // Fallback: save to local public/ directory (dev mode)
+  try {
+    const response = await fetch(url);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const dir = path.join(process.cwd(), 'public', 'images', 'stories', storyId);
+    await fs.mkdir(dir, { recursive: true });
+    const ext = url.includes('.webp') ? 'webp' : 'png';
+    const filePath = path.join(dir, `${pageNumber}.${ext}`);
+    await fs.writeFile(filePath, buffer);
+    console.log(`[Image] Page ${pageNumber} saved locally`);
+    return `/images/stories/${storyId}/${pageNumber}.${ext}`;
+  } catch (err) {
+    console.error('Local image save failed, using original URL:', err);
+    return url;
+  }
+}
+
+// ==================== TTS (Text-to-Speech) ====================
+
+type TTSVoice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
+
+export async function generatePageAudio(params: {
+  text: string;
+  voice: TTSVoice;
+  speed?: number;
+}): Promise<Buffer> {
+  const response = await getOpenAI().audio.speech.create({
+    model: 'tts-1',
+    voice: params.voice,
+    input: params.text,
+    response_format: 'mp3',
+    speed: params.speed ?? 1.0,
+  });
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+export async function generateAndSavePageAudio(params: {
+  text: string;
+  voice: TTSVoice;
+  speed?: number;
+  storyId: string;
+  pageNumber: number;
+}): Promise<string> {
+  const audioBuffer = await generatePageAudio({
+    text: params.text,
+    voice: params.voice,
+    speed: params.speed,
+  });
+
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(
+      `stories/${params.storyId}/audio/${params.pageNumber}.mp3`,
+      audioBuffer,
+      { access: 'public', contentType: 'audio/mpeg' }
+    );
+    console.log(`[TTS] Page ${params.pageNumber} audio saved to Blob`);
+    return blob.url;
+  }
+
+  // Fallback: save to local public/ directory (dev mode)
+  const dir = path.join(process.cwd(), 'public', 'audio', 'stories', params.storyId);
+  await fs.mkdir(dir, { recursive: true });
+  const filePath = path.join(dir, `${params.pageNumber}.mp3`);
+  await fs.writeFile(filePath, audioBuffer);
+  console.log(`[TTS] Page ${params.pageNumber} audio saved locally`);
+  return `/audio/stories/${params.storyId}/${params.pageNumber}.mp3`;
+}
+
+export async function generateAllAudioParallel(pages: Array<{
+  text: string;
+  pageNumber: number;
+  storyId: string;
+  voice: TTSVoice;
+  speed?: number;
+}>): Promise<Array<{ pageNumber: number; url: string | null; error?: string }>> {
+  const promises = pages.map(async (page) => {
+    try {
+      const url = await generateAndSavePageAudio(page);
+      return { pageNumber: page.pageNumber, url };
+    } catch (err) {
+      console.error(`TTS failed for page ${page.pageNumber}:`, err);
+      return { pageNumber: page.pageNumber, url: null, error: (err as Error).message };
+    }
+  });
+
+  return Promise.all(promises);
 }

@@ -1,18 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { UsageInfo } from "@/types";
+import { Crown, Sparkles, Clock } from "lucide-react";
+import { useUsage } from "@/components/UsageProvider";
 
 export default function CreditCounter() {
-  const [usage, setUsage] = useState<UsageInfo | null>(null);
-
-  useEffect(() => {
-    fetch("/api/usage")
-      .then((r) => r.json())
-      .then(setUsage)
-      .catch(() => {});
-  }, []);
+  const { usage } = useUsage();
 
   if (!usage) return null;
 
@@ -20,9 +13,9 @@ export default function CreditCounter() {
     return (
       <Link
         href="/perfil"
-        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-medium hover:bg-purple-200 transition-colors"
+        className="badge-premium hover:shadow-colored transition-all duration-200"
       >
-        <span>⭐</span>
+        <Crown className="w-3.5 h-3.5" />
         <span>{usage.totalCreditsAvailable} cr</span>
       </Link>
     );
@@ -31,13 +24,17 @@ export default function CreditCounter() {
   return (
     <Link
       href="/perfil"
-      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium hover:opacity-80 transition-opacity ${
+      className={`badge hover:shadow-sm transition-all duration-200 ${
         usage.freeRemaining > 0
-          ? "bg-green-100 text-green-700"
-          : "bg-orange-100 text-orange-700"
+          ? "badge-success"
+          : "badge-warning"
       }`}
     >
-      <span>{usage.freeRemaining > 0 ? "✨" : "⏳"}</span>
+      {usage.freeRemaining > 0 ? (
+        <Sparkles className="w-3.5 h-3.5" />
+      ) : (
+        <Clock className="w-3.5 h-3.5" />
+      )}
       <span>
         {usage.freeRemaining > 0
           ? `${usage.freeRemaining} gratis`

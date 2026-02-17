@@ -28,6 +28,7 @@ export interface Story {
   flagged_count: number;
   credit_cost: number;
   image_quality: string;
+  narration_voice: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +40,7 @@ export interface Page {
   text: string;
   image_url: string | null;
   image_prompt: string | null;
+  audio_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -93,9 +95,13 @@ export interface UsageInfo {
   planType: 'free' | 'premium';
   storiesThisWeek: number;
   storiesThisMonth: number;
+  storiesThisDay: number;
   weeklyLimit: number;
   monthlyLimit: number;
+  dailyLimit: number;
   freeRemaining: number;
+  premiumDailyRemaining: number;
+  premiumMonthlyRemaining: number;
   libraryCount: number;
   libraryLimit: number;
   monthlyCreditsRemaining: number;
@@ -133,5 +139,5 @@ export interface CreditLedgerEntry {
 export interface GateResult {
   allowed: boolean;
   reason?: string;
-  paywallType?: 'upgrade' | 'topup';
+  paywallType?: 'upgrade' | 'topup' | 'info';
 }

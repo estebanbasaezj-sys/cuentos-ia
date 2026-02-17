@@ -3,6 +3,16 @@
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import {
+  User,
+  Mail,
+  Crown,
+  ArrowUpRight,
+  ArrowDownRight,
+  LogOut,
+  Trash2,
+  ShoppingCart,
+} from "lucide-react";
 import type { UsageInfo, Wallet, CreditLedgerEntry } from "@/types";
 
 export default function PerfilPage() {
@@ -35,81 +45,102 @@ export default function PerfilPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-purple-800 mb-8">Mi perfil</h1>
+      <div className="flex items-center gap-3 mb-8">
+        <div className="icon-container-sm">
+          <User className="w-5 h-5" />
+        </div>
+        <h1 className="text-3xl font-display font-bold text-gradient">Mi perfil</h1>
+      </div>
 
       <div className="card mb-6">
-        <h2 className="font-bold text-lg text-purple-700 mb-4">Informacion de cuenta</h2>
+        <h2 className="font-display font-bold text-lg text-gray-800 mb-4">Informacion de cuenta</h2>
         <div className="space-y-3">
-          <div>
-            <span className="text-sm text-gray-500">Nombre:</span>
-            <p className="font-medium">{session?.user?.name || "—"}</p>
+          <div className="flex items-center gap-3">
+            <User className="w-4 h-4 text-gray-400" />
+            <div>
+              <span className="text-xs text-gray-400 font-heading">Nombre</span>
+              <p className="font-heading font-bold text-gray-700">{session?.user?.name || "—"}</p>
+            </div>
           </div>
-          <div>
-            <span className="text-sm text-gray-500">Correo:</span>
-            <p className="font-medium">{session?.user?.email || "—"}</p>
+          <div className="flex items-center gap-3">
+            <Mail className="w-4 h-4 text-gray-400" />
+            <div>
+              <span className="text-xs text-gray-400 font-heading">Correo</span>
+              <p className="font-heading font-bold text-gray-700">{session?.user?.email || "—"}</p>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="card mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-lg text-purple-700">
+          <h2 className="font-display font-bold text-lg text-gray-800">
             {isPremium ? "Plan Premium" : "Plan Gratuito"}
           </h2>
           {isPremium ? (
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Premium</span>
+            <span className="badge-premium">
+              <Crown className="w-3.5 h-3.5" />
+              Premium
+            </span>
           ) : (
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Free</span>
+            <span className="badge">Free</span>
           )}
         </div>
 
         {usage ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {isPremium ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-purple-50 rounded-xl p-3">
-                    <p className="text-xs text-purple-500">Creditos mensuales</p>
-                    <p className="text-xl font-bold text-purple-700">{usage.monthlyCreditsRemaining}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="card-premium !p-4 text-center">
+                    <p className="text-xs text-brand-500 font-heading mb-1">Creditos mensuales</p>
+                    <p className="text-2xl font-display font-bold text-brand-700">{usage.monthlyCreditsRemaining}</p>
                   </div>
-                  <div className="bg-purple-50 rounded-xl p-3">
-                    <p className="text-xs text-purple-500">Creditos comprados</p>
-                    <p className="text-xl font-bold text-purple-700">{usage.purchasedCreditsBalance}</p>
+                  <div className="card-premium !p-4 text-center">
+                    <p className="text-xs text-brand-500 font-heading mb-1">Creditos comprados</p>
+                    <p className="text-2xl font-display font-bold text-brand-700">{usage.purchasedCreditsBalance}</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">
-                  Total disponible: <strong className="text-purple-700">{usage.totalCreditsAvailable} creditos</strong>
+                <p className="text-sm text-gray-500 font-heading">
+                  Total disponible: <strong className="text-brand-700">{usage.totalCreditsAvailable} creditos</strong>
                 </p>
                 {wallet?.renewal_date && (
                   <p className="text-xs text-gray-400">
                     Renovacion: {new Date(wallet.renewal_date).toLocaleDateString("es-CL")}
                   </p>
                 )}
-                <div className="flex gap-2 mt-2">
-                  <Link href="/precios#topup" className="btn-secondary text-sm !py-2">
-                    Comprar creditos
-                  </Link>
-                </div>
+                <Link
+                  href="/precios#topup"
+                  className="btn-secondary text-sm !py-2 inline-flex items-center gap-1.5"
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  Comprar creditos
+                </Link>
               </>
             ) : (
               <>
-                <p className="text-sm">
-                  <span className="text-gray-500">Cuentos esta semana:</span>{" "}
-                  <span className="font-medium">{usage.storiesThisWeek} de {usage.weeklyLimit}</span>
-                </p>
-                <p className="text-sm">
-                  <span className="text-gray-500">Disponibles:</span>{" "}
-                  <span className="font-medium text-green-600">{usage.freeRemaining}</span>
-                </p>
-                <p className="text-sm">
-                  <span className="text-gray-500">Biblioteca:</span>{" "}
-                  <span className="font-medium">{usage.libraryCount} de {usage.libraryLimit} cuentos</span>
-                </p>
-                <div className="mt-4 p-4 bg-purple-50 rounded-xl">
-                  <p className="text-sm text-purple-700 font-medium mb-1">
-                    Desbloquea todo con Premium
-                  </p>
-                  <p className="text-xs text-purple-600 mb-3">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Cuentos esta semana:</span>
+                    <span className="font-heading font-bold">{usage.storiesThisWeek} de {usage.weeklyLimit}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Disponibles:</span>
+                    <span className="font-heading font-bold text-emerald-600">{usage.freeRemaining}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Biblioteca:</span>
+                    <span className="font-heading font-bold">{usage.libraryCount} de {usage.libraryLimit} cuentos</span>
+                  </div>
+                </div>
+                <div className="card-premium !p-4 mt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crown className="w-4 h-4 text-brand-600" />
+                    <p className="text-sm text-brand-700 font-heading font-bold">
+                      Desbloquea todo con Premium
+                    </p>
+                  </div>
+                  <p className="text-xs text-brand-600/70 mb-3">
                     Cuentos ilimitados, todos los estilos, sin marca de agua en PDF, y mas.
                   </p>
                   <Link href="/precios" className="btn-primary text-sm !py-2 !px-4">
@@ -120,26 +151,35 @@ export default function PerfilPage() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">Cargando...</p>
+          <div className="space-y-2">
+            <div className="skeleton h-4 w-full" />
+            <div className="skeleton h-4 w-2/3" />
+          </div>
         )}
       </div>
 
-      {/* Recent transactions (premium only) */}
       {isPremium && ledger.length > 0 && (
         <div className="card mb-6">
-          <h2 className="font-bold text-lg text-purple-700 mb-4">Ultimas transacciones</h2>
-          <div className="space-y-2">
+          <h2 className="font-display font-bold text-lg text-gray-800 mb-4">Ultimas transacciones</h2>
+          <div className="space-y-1">
             {ledger.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">{entry.description || entry.source}</p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(entry.created_at).toLocaleDateString("es-CL", {
-                      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-                    })}
-                  </p>
+              <div key={entry.id} className="flex items-center justify-between py-2.5 border-b border-gray-100/60 last:border-0">
+                <div className="flex items-center gap-3">
+                  {entry.amount > 0 ? (
+                    <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                  ) : (
+                    <ArrowDownRight className="w-4 h-4 text-red-400" />
+                  )}
+                  <div>
+                    <p className="text-sm font-heading font-bold text-gray-700">{entry.description || entry.source}</p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(entry.created_at).toLocaleDateString("es-CL", {
+                        day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+                      })}
+                    </p>
+                  </div>
                 </div>
-                <span className={`text-sm font-bold ${entry.amount > 0 ? "text-green-600" : "text-red-500"}`}>
+                <span className={`text-sm font-heading font-bold ${entry.amount > 0 ? "text-emerald-600" : "text-red-500"}`}>
                   {entry.amount > 0 ? "+" : ""}{entry.amount}
                 </span>
               </div>
@@ -148,19 +188,21 @@ export default function PerfilPage() {
         </div>
       )}
 
-      <div className="card border-red-100">
-        <h2 className="font-bold text-lg text-red-600 mb-4">Zona de peligro</h2>
+      <div className="card" style={{ borderColor: "rgba(239, 68, 68, 0.15)" }}>
+        <h2 className="font-display font-bold text-lg text-red-600 mb-4">Zona de peligro</h2>
         <p className="text-sm text-gray-500 mb-4">
           Al eliminar tu cuenta se borraran permanentemente todos tus cuentos, datos y configuracion.
         </p>
         <div className="flex gap-3">
-          <button onClick={handleDeleteAccount} className="btn-danger" disabled={deleting}>
+          <button onClick={handleDeleteAccount} className="btn-danger flex items-center gap-1.5" disabled={deleting}>
+            <Trash2 className="w-3.5 h-3.5" />
             Eliminar mi cuenta
           </button>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="btn-secondary text-sm"
+            className="btn-secondary text-sm flex items-center gap-1.5"
           >
+            <LogOut className="w-3.5 h-3.5" />
             Cerrar sesion
           </button>
         </div>

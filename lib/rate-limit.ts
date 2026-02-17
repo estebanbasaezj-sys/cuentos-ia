@@ -1,11 +1,13 @@
 import db from './db';
 import { getOrCreateWallet, totalCredits } from './wallet';
-import { FREE_LIMITS } from './monetization';
-import { countStoriesThisMonth } from './feature-gate';
+import { FREE_LIMITS, PREMIUM_LIMITS, isAdminEmail } from './monetization';
+import { countStoriesThisMonth, countStoriesThisDay } from './feature-gate';
 import type { UsageInfo } from '@/types';
 
 export async function checkUsage(userId: string): Promise<UsageInfo> {
   const wallet = await getOrCreateWallet(userId);
+  const user = await db.get<{ email: string }>('SELECT email FROM users WHERE id = ?', userId);
+  const admin = !!user && isAdminEmail(user.email);
 
   const weekResult = await db.get<{ cnt: number }>(
     "SELECT COUNT(*) as cnt FROM stories WHERE user_id = ? AND created_at >= datetime('now', '-7 days')", userId
@@ -20,21 +22,35 @@ export async function checkUsage(userId: string): Promise<UsageInfo> {
   const storiesThisWeek = weekResult?.cnt || 0;
   const storiesThisMonth = monthResult?.cnt || 0;
   const libraryCount = libraryResult?.cnt || 0;
+  const storiesThisDay = admin ? 0 : await countStoriesThisDay(userId);
+
+  const isPremium = wallet.plan_type === 'premium';
 
   return {
-    planType: wallet.plan_type as 'free' | 'premium',
+    planType: admin ? 'premium' : wallet.plan_type as 'free' | 'premium',
     storiesThisWeek,
     storiesThisMonth,
-    weeklyLimit: FREE_LIMITS.storiesPerWeek,
-    monthlyLimit: FREE_LIMITS.storiesPerMonth,
-    freeRemaining: wallet.plan_type === 'free'
-      ? Math.max(0, FREE_LIMITS.storiesPerWeek - storiesThisWeek)
-      : Infinity,
+    storiesThisDay,
+    weeklyLimit: admin ? Infinity : FREE_LIMITS.storiesPerWeek,
+    monthlyLimit: admin ? Infinity : (isPremium ? PREMIUM_LIMITS.storiesPerMonth : FREE_LIMITS.storiesPerMonth),
+    dailyLimit: admin ? Infinity : (isPremium ? PREMIUM_LIMITS.storiesPerDay : Infinity),
+    freeRemaining: admin ? Infinity
+      : wallet.plan_type === 'free'
+        ? Math.max(0, FREE_LIMITS.storiesPerWeek - storiesThisWeek)
+        : Infinity,
+    premiumDailyRemaining: admin ? Infinity
+      : isPremium
+        ? Math.max(0, PREMIUM_LIMITS.storiesPerDay - storiesThisDay)
+        : 0,
+    premiumMonthlyRemaining: admin ? Infinity
+      : isPremium
+        ? Math.max(0, PREMIUM_LIMITS.storiesPerMonth - storiesThisMonth)
+        : 0,
     libraryCount,
-    libraryLimit: wallet.plan_type === 'free' ? FREE_LIMITS.maxLibraryStories : Infinity,
-    monthlyCreditsRemaining: wallet.monthly_credits_remaining,
-    purchasedCreditsBalance: wallet.credits_balance,
-    totalCreditsAvailable: totalCredits(wallet),
+    libraryLimit: admin ? Infinity : (isPremium ? Infinity : FREE_LIMITS.maxLibraryStories),
+    monthlyCreditsRemaining: admin ? 9999 : wallet.monthly_credits_remaining,
+    purchasedCreditsBalance: admin ? 9999 : wallet.credits_balance,
+    totalCreditsAvailable: admin ? 9999 : totalCredits(wallet),
     renewalDate: wallet.renewal_date,
   };
 }

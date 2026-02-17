@@ -37,6 +37,10 @@ yarn-error.log*
 # uploaded images
 /public/uploads/
 
+# generated audio & images (dev)
+/public/audio/
+/public/images/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

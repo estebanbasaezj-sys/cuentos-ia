@@ -10,7 +10,8 @@ export type EventType =
   | 'subscribed'
   | 'topup_clicked'
   | 'topup_purchased'
-  | 'export_pdf';
+  | 'export_pdf'
+  | 'narration_generated';
 
 export async function trackEvent(
   eventType: EventType,

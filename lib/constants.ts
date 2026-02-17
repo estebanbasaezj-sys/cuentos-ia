@@ -51,3 +51,18 @@ export const COLOR_PALETTES = [
   { value: 'vibrant', label: 'Vibrantes', prompt: 'bright vibrant saturated colors, high contrast' },
   { value: 'earth', label: 'Tierra', prompt: 'earthy natural tones, browns, greens, warm neutrals' },
 ] as const;
+
+export const TTS_VOICES = [
+  { value: 'nova', label: 'Nova', description: 'Voz femenina suave y calida - ideal para cuentos tiernos' },
+  { value: 'shimmer', label: 'Shimmer', description: 'Voz femenina clara y expresiva - ideal para aventuras' },
+  { value: 'fable', label: 'Fable', description: 'Voz narrativa con caracter - ideal para fantasia' },
+  { value: 'echo', label: 'Echo', description: 'Voz masculina calma y envolvente' },
+  { value: 'onyx', label: 'Onyx', description: 'Voz masculina profunda y segura' },
+  { value: 'alloy', label: 'Alloy', description: 'Voz neutra y versatil' },
+] as const;
+
+export const TTS_SPEEDS = [
+  { value: 0.75, label: '0.75x' },
+  { value: 1.0, label: '1x' },
+  { value: 1.25, label: '1.25x' },
+] as const;

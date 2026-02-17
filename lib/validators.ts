@@ -15,6 +15,8 @@ export const createStorySchema = z.object({
   artStyle: z.string().optional(),
   colorPalette: z.string().optional(),
   imageQuality: z.enum(['standard', 'high']).optional(),
+  authorName: z.string().max(50, 'Máximo 50 caracteres').optional(),
+  dedication: z.string().max(100, 'Máximo 100 caracteres').optional(),
   traits: z.object({
     mascota: z.string().max(30).optional(),
     colorFavorito: z.string().max(30).optional(),
@@ -48,6 +50,22 @@ export const updatePagesSchema = z.object({
     id: z.string(),
     text: z.string().min(1).max(2000),
   })),
+});
+
+export const narrateStorySchema = z.object({
+  voice: z.enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'], {
+    message: 'Selecciona una voz valida',
+  }),
+  speed: z.number().min(0.25).max(4.0).optional().default(1.0),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Correo invalido'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token requerido'),
+  password: z.string().min(6, 'Minimo 6 caracteres'),
 });
 
 export type CreateStoryInput = z.infer<typeof createStorySchema>;
