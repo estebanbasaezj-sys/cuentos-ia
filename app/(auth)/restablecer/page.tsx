@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { KeyRound, ArrowLeft, AlertCircle, CheckCircle, Loader2, Eye, EyeOff } from "lucide-react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const emailHint = searchParams.get("email") || "";
 
@@ -162,5 +162,13 @@ export default function ResetPasswordPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="card animate-pulse"><div className="skeleton h-8 w-2/3 mx-auto mb-4" /><div className="skeleton h-4 w-1/2 mx-auto" /></div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
