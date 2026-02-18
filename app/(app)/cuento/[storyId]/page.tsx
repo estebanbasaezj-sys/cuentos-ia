@@ -46,6 +46,7 @@ export default function CuentoPage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallGate, setPaywallGate] = useState<GateResult>({ allowed: false, reason: "premium_narration", paywallType: "upgrade" });
   const [goToPage, setGoToPage] = useState<{ page: number; id: number } | null>(null);
+  const [currentBookPage, setCurrentBookPage] = useState(0);
   const flipIdRef = useRef(0);
 
   useEffect(() => {
@@ -105,8 +106,9 @@ export default function CuentoPage() {
   // Do NOT set currentPage here — the onFlip callback in StoryBook will
   // update it once the flip animation completes, which then triggers the new audio.
   const handleAudioPageChange = useCallback((page: number) => {
-    setGoToPage({ page, id: ++flipIdRef.current });
-  }, []);
+    const normalizedPage = currentBookPage < 2 ? 0 : page;
+    setGoToPage({ page: normalizedPage, id: ++flipIdRef.current });
+  }, [currentBookPage]);
 
   const handleDownloadPDF = async () => {
     setPdfLoading(true);
@@ -268,6 +270,7 @@ export default function CuentoPage() {
           pages={story.pages}
           coverImageUrl={story.pages[0]?.image_url || undefined}
           onPageChange={(storyIndex) => setCurrentPage(storyIndex)}
+          onBookPageChange={setCurrentBookPage}
           goToPage={goToPage}
         />
       </div>

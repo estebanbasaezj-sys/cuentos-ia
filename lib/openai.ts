@@ -149,36 +149,65 @@ export async function downloadAndSaveImage(
   storyId: string,
   pageNumber: number
 ): Promise<string> {
-  // Try to upload to Vercel Blob for persistent storage
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    try {
-      const response = await fetch(url);
-      const buffer = Buffer.from(await response.arrayBuffer());
-      const blob = await put(`stories/${storyId}/${pageNumber}.png`, buffer, {
-        access: 'public',
-        contentType: 'image/png',
-      });
-      return blob.url;
-    } catch (err) {
-      console.error('Blob upload failed:', err);
+  let imageBuffer: Buffer;
+  let contentType = 'image/png';
+  try {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Image fetch failed with status ${response.status}`);
+    }
+    imageBuffer = Buffer.from(await response.arrayBuffer());
+    const detectedContentType = response.headers.get('content-type');
+    if (detectedContentType?.startsWith('image/')) {
+      contentType = detectedContentType.split(';')[0];
+    } else if (url.toLowerCase().includes('.webp')) {
+      contentType = 'image/webp';
+    } else if (url.toLowerCase().includes('.jpg') || url.toLowerCase().includes('.jpeg')) {
+      contentType = 'image/jpeg';
+    }
+  } catch (err) {
+    console.error('Image fetch failed, using original URL:', err);
+    return url;
+  }
+
+  const extension =
+    contentType === 'image/webp' ? 'webp' :
+    contentType === 'image/jpeg' ? 'jpg' :
+    'png';
+
+  const shouldTryBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
+  if (shouldTryBlob) {
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const blob = await put(`stories/${storyId}/${pageNumber}.${extension}`, imageBuffer, {
+          access: 'public',
+          contentType,
+        });
+        return blob.url;
+      } catch (err) {
+        console.error(`Blob upload failed (attempt ${attempt}/2):`, err);
+      }
     }
   }
 
-  // Fallback: save to local public/ directory (dev mode)
-  try {
-    const response = await fetch(url);
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const dir = path.join(process.cwd(), 'public', 'images', 'stories', storyId);
-    await fs.mkdir(dir, { recursive: true });
-    const ext = url.includes('.webp') ? 'webp' : 'png';
-    const filePath = path.join(dir, `${pageNumber}.${ext}`);
-    await fs.writeFile(filePath, buffer);
-    console.log(`[Image] Page ${pageNumber} saved locally`);
-    return `/images/stories/${storyId}/${pageNumber}.${ext}`;
-  } catch (err) {
-    console.error('Local image save failed, using original URL:', err);
-    return url;
+  // Dev fallback: write to local public directory.
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    try {
+      const dir = path.join(process.cwd(), 'public', 'images', 'stories', storyId);
+      await fs.mkdir(dir, { recursive: true });
+      const filePath = path.join(dir, `${pageNumber}.${extension}`);
+      await fs.writeFile(filePath, imageBuffer);
+      console.log(`[Image] Page ${pageNumber} saved locally`);
+      return `/images/stories/${storyId}/${pageNumber}.${extension}`;
+    } catch (err) {
+      console.error('Local image save failed:', err);
+    }
   }
+
+  // Production-safe fallback: inline data URL (avoids expiring provider URLs).
+  const base64 = imageBuffer.toString('base64');
+  console.warn(`[Image] Falling back to inline data URL for story ${storyId}, page ${pageNumber}`);
+  return `data:${contentType};base64,${base64}`;
 }
 
 // ==================== TTS (Text-to-Speech) ====================

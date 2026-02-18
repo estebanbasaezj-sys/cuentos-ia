@@ -12,6 +12,7 @@ interface StoryBookProps {
   pages: StoryPage[];
   coverImageUrl?: string;
   onPageChange?: (storyPageIndex: number) => void;
+  onBookPageChange?: (bookPageIndex: number) => void;
   /** When this changes, the book flips to the specified story page index */
   goToPage?: { page: number; id: number } | null;
 }
@@ -35,6 +36,7 @@ export default function StoryBook({
   pages,
   coverImageUrl,
   onPageChange,
+  onBookPageChange,
   goToPage,
 }: StoryBookProps) {
   const bookRef = useRef<typeof HTMLFlipBook>(null);
@@ -93,11 +95,12 @@ export default function StoryBook({
   const handleFlip = useCallback(
     (e: { data: number }) => {
       playFlipSound();
+      onBookPageChange?.(e.data);
       // e.data = book page index: 0=cover, 1=endpaper, 2+=content pages
       const storyIndex = Math.max(0, e.data - 2);
       onPageChange?.(storyIndex);
     },
-    [playFlipSound, onPageChange]
+    [playFlipSound, onBookPageChange, onPageChange]
   );
 
   const effectiveCoverImage = coverImageUrl || pages[0]?.image_url;

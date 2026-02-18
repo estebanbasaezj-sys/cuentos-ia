@@ -27,6 +27,7 @@ export default function StoryAudioPlayer({
   const [muted, setMuted] = useState(false);
   // Track user interaction to unlock autoplay
   const [userInteracted, setUserInteracted] = useState(false);
+  const lastAutoAdvanceKeyRef = useRef<string | null>(null);
 
   // Load new audio when URL changes (page flip)
   useEffect(() => {
@@ -60,6 +61,10 @@ export default function StoryAudioPlayer({
       audioRef.current.playbackRate = speed;
     }
   }, [speed]);
+
+  useEffect(() => {
+    lastAutoAdvanceKeyRef.current = null;
+  }, [audioUrl, currentPage]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -96,6 +101,14 @@ export default function StoryAudioPlayer({
 
   const handleEnded = () => {
     setIsPlaying(false);
+    setUserInteracted(true);
+
+    const advanceKey = `${currentPage}:${audioUrl ?? "no-audio"}`;
+    if (lastAutoAdvanceKeyRef.current === advanceKey) {
+      return;
+    }
+    lastAutoAdvanceKeyRef.current = advanceKey;
+
     // Auto-advance to next page when audio ends
     if (currentPage < totalPages - 1 && onPageChange) {
       onPageChange(currentPage + 1);
