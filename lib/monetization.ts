@@ -9,6 +9,7 @@ export type ImageQuality = 'standard' | 'high';
 // --- Admin: sin limites ---
 export const ADMIN_EMAILS = [
   'esteban.basaez.j@gmail.com',
+  'estebanbasaez@hotmail.com',
 ];
 
 // --- Plan Free: limites ---
